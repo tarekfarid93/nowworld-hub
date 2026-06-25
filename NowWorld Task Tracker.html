@@ -1,0 +1,2634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N.O.W.WORLD — Operations Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ────────────────────────────────────────── */
+:root{
+  --bg:#0a0a12;--panel:#13131f;--panel2:#0d0d1a;--panel3:#16162a;
+  --line:rgba(79,70,229,.18);--line2:rgba(255,255,255,.06);
+  --ink:#e7e7ef;--muted:#8a8aa0;--dim:#55556a;
+  --indigo:#4f46e5;--cyan:#06b6d4;--green:#10b981;
+  --amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+  --field:#1a1a2e;--sidebar-w:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans',sans-serif;background:
+  radial-gradient(1200px 600px at 80% -5%,rgba(79,70,229,.10),transparent 60%),
+  radial-gradient(900px 500px at 0% 110%,rgba(6,182,212,.08),transparent 55%),
+  var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ─────────────── PIN LOCK ─────────────────────────────────── */
+.pin-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 600px at 85% -10%,rgba(79,70,229,.15),transparent 60%),
+  radial-gradient(900px 500px at 0% 110%,rgba(6,182,212,.12),transparent 55%),var(--bg)}
+.lock-card{background:linear-gradient(180deg,#13131f,#0d0d1a);border:1px solid rgba(79,70,229,.3);
+  border-radius:20px;padding:2.2rem 2rem 1.8rem;width:300px;max-width:92vw;
+  display:flex;flex-direction:column;align-items:center;gap:.9rem;position:relative;overflow:hidden}
+.lock-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;
+  background:linear-gradient(90deg,var(--indigo),var(--cyan),transparent)}
+.lock-logo{font-family:'Fraunces',serif;font-weight:700;font-size:22px;letter-spacing:-.5px;
+  background:linear-gradient(120deg,#818cf8,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lock-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-top:-4px}
+.lock-icon{font-size:28px;opacity:.6}
+.lock-label{font-size:12px;color:var(--muted);letter-spacing:.3px}
+.pin-dots{display:flex;gap:12px}
+.pin-dot{width:11px;height:11px;border-radius:50%;background:transparent;border:2px solid var(--dim);transition:all .15s}
+.pin-dot.filled{background:var(--cyan);border-color:var(--cyan);transform:scale(1.1)}
+.pin-dot.error{background:var(--red);border-color:var(--red)}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:100%}
+.key{background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.2);border-radius:11px;
+  color:var(--ink);font-family:'Fraunces',serif;font-size:19px;font-weight:600;height:50px;
+  cursor:pointer;transition:background .12s,transform .1s;display:flex;align-items:center;justify-content:center;user-select:none}
+.key:hover{background:rgba(79,70,229,.25)}
+.key:active{transform:scale(.93)}
+.key.del{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;color:var(--muted)}
+.key.empty{pointer-events:none;background:transparent;border-color:transparent}
+.pin-err{font-size:11px;color:var(--red);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;min-height:15px;text-align:center}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .35s ease}
+
+/* ─────────────── APP SELECTOR ─────────────────────────────── */
+#appSelector{display:none;position:fixed;inset:0;z-index:8000;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 600px at 80% -5%,rgba(79,70,229,.12),transparent 60%),
+  radial-gradient(900px 500px at 0% 110%,rgba(6,182,212,.08),transparent 55%),var(--bg)}
+.selector-wrap{text-align:center}
+.selector-logo{font-family:'Fraunces',serif;font-weight:700;font-size:36px;letter-spacing:-.8px;
+  background:linear-gradient(120deg,#818cf8,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.selector-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:3rem}
+.selector-cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.selector-card{background:linear-gradient(180deg,#13131f,#0d0d1a);border:1px solid rgba(79,70,229,.25);
+  border-radius:18px;padding:2.2rem 2rem;width:220px;cursor:pointer;
+  transition:transform .18s,border-color .18s,box-shadow .18s;position:relative;overflow:hidden;text-align:center}
+.selector-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;
+  background:linear-gradient(90deg,var(--indigo),var(--cyan),transparent)}
+.selector-card:hover{transform:translateY(-4px);border-color:rgba(79,70,229,.5);box-shadow:0 16px 40px rgba(79,70,229,.2)}
+.selector-card .sc-icon{font-size:40px;margin-bottom:1rem}
+.selector-card .sc-title{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:.4rem}
+.selector-card .sc-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.selector-card .sc-badge{display:inline-block;margin-top:.8rem;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px}
+
+/* ─────────────── BACK BUTTON ───────────────────────────────── */
+.back-btn{position:fixed;top:14px;left:14px;z-index:7000;background:rgba(19,19,31,.9);
+  border:1px solid var(--line);border-radius:10px;padding:7px 14px;
+  font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;
+  display:none;align-items:center;gap:6px;backdrop-filter:blur(8px);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;transition:all .15s}
+.back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ─────────────── TASK TRACKER ──────────────────────────────── */
+#taskApp{display:none;background:#F4F5F7;min-height:100vh}
+#t-page-manager{background:#F4F5F7}
+.t-layout{display:flex;min-height:100vh;background:#F4F5F7}
+
+/* SIDEBAR */
+.t-sidebar{width:var(--sidebar-w);flex-shrink:0;background:linear-gradient(180deg,#0e0e1c,#0a0a14);
+  border-right:1px solid var(--line2);position:fixed;top:0;left:0;bottom:0;z-index:100;
+  display:flex;flex-direction:column;overflow:hidden}
+.t-sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--line2)}
+.t-sb-logo{font-family:'Fraunces',serif;font-weight:700;font-size:15px;
+  background:linear-gradient(120deg,#818cf8,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.t-sb-sub{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2.5px;color:var(--dim);text-transform:uppercase;margin-top:2px}
+.t-sb-nav{padding:12px 8px;flex:1;overflow-y:auto}
+.t-sb-sect{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 8px 5px}
+.t-sb-link{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;
+  color:rgba(231,231,239,.45);font-size:12px;cursor:pointer;transition:all .15s;
+  border:none;background:none;width:100%;text-align:left;margin-bottom:1px}
+.t-sb-link:hover{background:rgba(79,70,229,.12);color:var(--ink)}
+.t-sb-link.active{background:rgba(79,70,229,.2);color:var(--ink);border-left:2px solid var(--indigo)}
+.t-sb-link .t-sb-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.t-sb-link .t-sb-cnt{margin-left:auto;background:rgba(239,68,68,.75);color:#fff;
+  font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:'IBM Plex Mono',monospace}
+.t-sb-divider{height:1px;background:var(--line2);margin:6px 10px}
+.t-sb-owner{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;
+  cursor:pointer;color:rgba(231,231,239,.4);font-size:11px;margin-bottom:1px;transition:all .15s}
+.t-sb-owner:hover{background:rgba(255,255,255,.04);color:var(--ink)}
+.t-sb-owner.active{color:var(--ink)}
+.t-owner-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.t-sb-footer{padding:12px 14px;border-top:1px solid var(--line2)}
+.t-sb-date{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim)}
+
+/* MAIN */
+.t-main{margin-left:var(--sidebar-w);flex:1;min-width:0;display:flex;flex-direction:column;background:#F4F5F7;min-height:100vh}
+.t-topbar{background:#ffffff;border-bottom:1px solid #E5E7EB;
+  padding:0 24px;height:52px;display:flex;align-items:center;gap:14px;
+  position:sticky;top:0;z-index:50;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.t-topbar-title{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:#1A1D23;flex:1}
+.t-topbar-sub{font-size:11px;color:#9CA3AF;font-weight:400;margin-left:8px;font-family:'IBM Plex Mono',monospace}
+.t-btn{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;
+  transition:all .15s;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif;letter-spacing:.3px}
+.t-btn-primary{background:linear-gradient(120deg,var(--indigo),#6366f1);color:#fff}
+.t-btn-primary:hover{box-shadow:0 4px 16px rgba(79,70,229,.4)}
+.t-btn-ghost{background:#F3F4F6;color:#4B5563;border:1px solid #D1D5DB}
+.t-btn-ghost:hover{border-color:#4F46E5;color:#4F46E5}
+.t-btn-sm{padding:4px 11px;font-size:10px}
+.t-btn-danger{background:#FEE2E2;color:#DC2626;border:1px solid #FECACA}
+.t-btn-danger:hover{background:#FECACA}
+.t-content{padding:20px 24px;flex:1;background:#F4F5F7;min-height:calc(100vh - 52px)}
+
+/* PAGE VIS */
+.t-page{display:none;background:#F4F5F7}.t-page.active{display:block;background:#F4F5F7}
+
+/* ALERT */
+.t-alert{border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px}
+.t-alert-danger{background:#FEE2E2;border:1px solid #FECACA;color:#991B1B}
+.t-alert-warn{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E}
+.t-alert-dismiss{margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:inherit;opacity:.6}
+.t-alert-dismiss:hover{opacity:1}
+
+/* FILTER ROW */
+.t-filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.t-filter-row select{padding:6px 10px;border-radius:7px;font-size:11px;
+  border:1px solid #D1D5DB;background:#ffffff;color:#374151;cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif}
+.t-filter-row select:focus{outline:none;border-color:#4F46E5}
+.t-filter-count{font-size:11px;color:#9CA3AF;margin-left:auto;font-family:'IBM Plex Mono',monospace}
+
+/* SWIM LANES */
+.t-lane{margin-bottom:24px}
+.t-lane-header{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border-radius:12px 12px 0 0;cursor:pointer;user-select:none;position:relative;overflow:hidden}
+.t-lane-header::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.2),transparent)}
+.t-lane-avatar{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;
+  background:rgba(255,255,255,.15)}
+.t-lane-info{flex:1}
+.t-lane-name{font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#fff}
+.t-lane-role{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px}
+.t-lane-stats{display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.7)}
+.t-lane-pct{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.15);color:#fff}
+.t-lane-toggle{font-size:10px;color:rgba(255,255,255,.4);margin-left:4px}
+.t-lane-body{padding:12px 0 2px}
+.t-lane-freq-group{margin-bottom:14px}
+.t-freq-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:7px;padding:0 2px;display:flex;align-items:center;gap:8px}
+.t-freq-label::after{content:"";flex:1;height:1px;background:#E5E7EB}
+.t-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+
+/* TASK CARD */
+.t-card{background:#ffffff;border:1px solid #E5E7EB;
+  border-radius:12px;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s}
+.t-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.1);border-color:rgba(79,70,229,.4)}
+.t-card-strip{height:2px}
+.t-card-body{padding:12px 13px 10px;cursor:pointer}
+.t-card-name{font-size:12px;font-weight:700;color:#1A1D23;line-height:1.4;margin-bottom:7px}
+.t-card-badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.t-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;
+  font-size:9px;font-weight:700;white-space:nowrap;line-height:1.6;font-family:'IBM Plex Mono',monospace;letter-spacing:.3px}
+.tb-daily  {background:#EFF6FF;color:#1D4ED8}
+.tb-weekly {background:#F0FDF4;color:#166534}
+.tb-monthly{background:#FFFBEB;color:#92400E}
+.tb-report {background:#EEF2FF;color:#4338CA}
+.tb-overdue{background:#FEE2E2;color:#991B1B}
+.tb-duetoday{background:#FEF3C7;color:#92400E}
+.tb-ontrack{background:#ECFDF5;color:#065F46}
+.tb-nodue  {background:#F3F4F6;color:#9CA3AF}
+.t-card-due{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9CA3AF;display:flex;align-items:center;gap:4px}
+.t-card-due.overdue{color:#DC2626;font-weight:600}
+.t-card-due.duetoday{color:#D97706;font-weight:600}
+.t-card-footer{padding:8px 13px 10px;border-top:1px solid #F3F4F6;display:flex;align-items:center;gap:7px}
+.t-status-select{flex:1;padding:5px 8px;border-radius:7px;font-size:10px;font-weight:700;
+  cursor:pointer;border:1px solid transparent;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236b6b85'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center;padding-right:20px;
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.3px}
+.t-status-select:focus{outline:none}
+.ts-pending{background:#FEF9EE;color:#92400E;border-color:#FCD34D}
+.ts-done   {background:#F0FDF4;color:#166534;border-color:#86EFAC}
+.ts-late   {background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.ts-na     {background:#F9FAFB;color:#6B7280;border-color:#D1D5DB}
+.t-card-btns{display:flex;gap:3px}
+.t-card-btn{padding:5px 7px;border-radius:6px;font-size:11px;background:#F9FAFB;
+  border:1px solid #E5E7EB;cursor:pointer;color:#6B7280;transition:all .15s;line-height:1}
+.t-card-btn:hover{background:#EEF2FF;color:#4F46E5;border-color:rgba(79,70,229,.4)}
+.t-card-btn.danger:hover{background:#FEE2E2;color:#DC2626;border-color:#FECACA}
+
+/* AUTO DUE INDICATOR */
+.t-auto-due{display:inline-flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;
+  font-size:9px;padding:2px 7px;border-radius:20px;white-space:nowrap}
+
+/* DAILY PULSE PAGE */
+.pulse-header{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.pulse-kpi{background:#ffffff;border:1px solid #E5E7EB;
+  border-radius:12px;padding:14px 16px;border-left:3px solid var(--owner-color);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.pulse-kpi-name{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;
+  color:#6B7280;text-transform:uppercase;margin-bottom:4px}
+.pulse-kpi-val{font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:#1A1D23;line-height:1}
+.pulse-kpi-sub{font-size:10px;color:#9CA3AF;margin-top:3px}
+.pulse-kpi-bar{height:3px;border-radius:2px;background:#E5E7EB;margin-top:8px;overflow:hidden}
+.pulse-kpi-bar-fill{height:100%;border-radius:2px;background:var(--owner-color);transition:width .4s}
+.pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pulse-sup-card{background:#ffffff;border:1px solid #E5E7EB;
+  border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.pulse-sup-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #F3F4F6}
+.pulse-sup-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.pulse-sup-name{font-size:13px;font-weight:700;color:#1A1D23}
+.pulse-sup-role{font-size:10px;color:#9CA3AF}
+.pulse-sup-pct{margin-left:auto;font-family:'Fraunces',serif;font-size:20px;font-weight:600}
+.pulse-task-row{display:flex;align-items:center;gap:8px;padding:9px 14px;
+  border-bottom:1px solid #F3F4F6}
+.pulse-task-row:last-child{border-bottom:none}
+.pulse-task-row:hover{background:#F8F9FF}
+.pulse-task-name{flex:1;font-size:11px;color:#4B5563;line-height:1.3}
+.pulse-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pulse-due-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;white-space:nowrap}
+.pulse-change-btn{padding:3px 8px;border-radius:5px;font-size:9px;font-weight:700;
+  border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+  background:rgba(79,70,229,.15);color:#a5b4fc;transition:all .15s}
+.pulse-change-btn:hover{background:rgba(79,70,229,.3)}
+
+/* MANAGER DASHBOARD */
+.mgr-pin-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;
+  background:rgba(10,10,18,.85);backdrop-filter:blur(8px)}
+.mgr-pin-overlay.open{display:flex}
+.mgr-kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.mgr-kpi{background:#ffffff;border:1px solid #E5E7EB;
+  border-radius:12px;padding:16px;border-left:3px solid var(--owner-color);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.mgr-kpi-abbr{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#6B7280;text-transform:uppercase}
+.mgr-kpi-val{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#1A1D23;line-height:1;margin:3px 0 1px}
+.mgr-kpi-sub{font-size:10px;color:#9CA3AF}
+.mgr-kpi-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.mgr-pill{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.mp-green{background:rgba(16,185,129,.15);color:#6ee7b7}
+.mp-amber{background:rgba(245,158,11,.15);color:#fcd34d}
+.mp-red  {background:rgba(239,68,68,.15);color:#fca5a5}
+.mp-gray {background:rgba(85,85,106,.2);color:var(--muted)}
+.mgr-charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.mgr-chart-card{background:#ffffff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.mgr-chart-title{font-family:'Fraunces',serif;font-size:13px;font-weight:600;color:#1A1D23;margin-bottom:2px}
+.mgr-chart-sub{font-size:10px;color:#9CA3AF;margin-bottom:14px;font-family:'IBM Plex Mono',monospace}
+.mgr-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mgr-bar-label{font-size:10px;color:#4B5563;width:70px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mgr-bar-track{flex:1;height:8px;background:#E5E7EB;border-radius:4px;overflow:hidden}
+.mgr-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.mgr-bar-val{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6B7280;width:30px;text-align:right;flex-shrink:0}
+.mgr-metric-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;
+  border-radius:8px;background:#F9FAFB;margin-bottom:6px;border:1px solid #F3F4F6}
+.mgr-metric-row:last-child{margin-bottom:0}
+.mgr-metric-label{font-size:11px;color:#4B5563;display:flex;align-items:center;gap:7px}
+.mgr-metric-val{font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+.mgr-sup-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.mgr-sup-card{background:#ffffff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.mgr-sup-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #F3F4F6}
+.mgr-sup-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.mgr-sup-name{font-size:13px;font-weight:700;color:#1A1D23}
+.mgr-sup-role{font-size:10px;color:#9CA3AF}
+.mgr-sup-ring{margin-left:auto;flex-shrink:0}
+.mgr-sup-stats{display:flex;gap:0;border-bottom:1px solid #F3F4F6}
+.mgr-sup-stat{flex:1;text-align:center;padding:10px 4px;border-right:1px solid #F3F4F6}
+.mgr-sup-stat:last-child{border-right:none}
+.mgr-sup-stat-val{font-family:'Fraunces',serif;font-size:20px;font-weight:600}
+.mgr-sup-stat-lbl{font-size:9px;color:#9CA3AF;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px}
+.mgr-task-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #F3F4F6}
+.mgr-task-item:last-child{border-bottom:none}
+.mgr-task-item:hover{background:#F8F9FF;cursor:pointer}
+.mgr-task-name{flex:1;font-size:11px;color:#4B5563;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mgr-task-expand{display:none;background:#F8F9FF;border-top:1px solid #E5E7EB;padding:12px 14px}
+.mgr-task-expand.open{display:block}
+.mgr-override-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mgr-ob{padding:4px 11px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid transparent;
+  cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s}
+.mgr-ob.active{box-shadow:0 0 0 2px var(--cyan)}
+.mgr-ob.ts-pending{background:#FEF9EE;color:#92400E;border-color:#FCD34D}
+.mgr-ob.ts-done   {background:#F0FDF4;color:#166534;border-color:#86EFAC}
+.mgr-ob.ts-late   {background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.mgr-ob.ts-na     {background:#F9FAFB;color:#6B7280;border-color:#D1D5DB}
+.mgr-hist-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#9CA3AF;text-transform:uppercase;margin-bottom:6px}
+.mgr-hist-row{font-size:10px;color:#6B7280;padding:2px 0;border-bottom:1px solid #F3F4F6}
+.mgr-hist-row:last-child{border-bottom:none}
+.feed-card{background:#ffffff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.feed-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6}
+.feed-item:last-child{border-bottom:none}
+.feed-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;flex-shrink:0;color:#fff}
+.feed-body{flex:1;min-width:0}
+.feed-title{font-size:11px;font-weight:600;color:#1A1D23;line-height:1.3}
+.feed-sub{font-size:10px;color:#6B7280;margin-top:2px}
+.feed-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9CA3AF;flex-shrink:0;padding-top:2px}
+
+/* MODAL */
+.t-overlay{position:fixed;inset:0;background:rgba(15,15,40,.5);z-index:600;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.t-overlay.open{display:flex}
+.t-modal{background:#ffffff;border:1px solid #E5E7EB;
+  border-radius:16px;width:min(540px,94vw);max-height:90vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.12);position:relative}
+.t-modal::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;
+  background:linear-gradient(90deg,#4F46E5,#06B6D4,transparent);border-radius:16px 16px 0 0}
+.t-modal-header{padding:20px 22px 0;display:flex;justify-content:space-between;align-items:center}
+.t-modal-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:#1A1D23}
+.t-modal-close{background:none;border:none;font-size:20px;color:#9CA3AF;cursor:pointer}
+.t-modal-close:hover{color:var(--ink)}
+.t-modal-body{padding:18px 22px}
+.t-form-group{margin-bottom:14px}
+.t-form-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  letter-spacing:1.5px;text-transform:uppercase;color:#6B7280;margin-bottom:5px}
+.t-form-ctrl{width:100%;padding:8px 11px;border-radius:8px;font-size:12px;
+  border:1px solid #D1D5DB;background:#F9FAFB;color:#1A1D23;font-family:'IBM Plex Sans',sans-serif;
+  transition:border-color .15s}
+.t-form-ctrl:focus{outline:none;border-color:#4F46E5}
+textarea.t-form-ctrl{resize:vertical;min-height:80px;line-height:1.6}
+.t-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.t-form-check{display:flex;align-items:center;gap:8px;font-size:12px;color:#4B5563;cursor:pointer}
+.t-modal-footer{padding:0 22px 20px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.t-modal-footer-r{display:flex;gap:7px}
+.t-confirm-modal{background:#ffffff;border:1px solid #FECACA;
+  border-radius:14px;padding:26px;width:min(380px,90vw);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.t-confirm-icon{font-size:36px;margin-bottom:10px}
+.t-confirm-title{font-family:'Fraunces',serif;font-size:15px;font-weight:600;margin-bottom:5px;color:#1A1D23}
+.t-confirm-text{font-size:11px;color:#6B7280;margin-bottom:18px;line-height:1.5}
+.t-confirm-actions{display:flex;gap:10px;justify-content:center}
+.t-desc-modal-body{font-size:12px;color:#4B5563;line-height:1.8;white-space:pre-wrap}
+.t-note-area{margin-top:14px;padding-top:12px;border-top:1px solid var(--line2)}
+.t-note-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#9CA3AF;text-transform:uppercase;margin-bottom:6px}
+.t-note-val{font-size:12px;color:#6B7280;font-style:italic;margin-bottom:8px}
+.t-note-edit-row{display:flex;gap:7px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:2px}
+
+/* TOAST */
+.t-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(16px);
+  opacity:0;background:#1A1D23;border:1px solid #06B6D4;color:#06B6D4;
+  padding:10px 18px;border-radius:10px;font-size:11px;font-weight:600;
+  transition:.3s;pointer-events:none;z-index:9000;box-shadow:0 8px 24px rgba(0,0,0,.2);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.5px}
+.t-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.t-toast.err{border-color:#DC2626;color:#DC2626}
+
+/* EMPTY */
+.t-empty{text-align:center;padding:3rem 1rem;color:#9CA3AF;font-size:12px}
+.t-empty-icon{font-size:32px;margin-bottom:8px}
+
+@media(max-width:700px){
+  .t-sidebar{display:none}
+  .t-main{margin-left:0}
+  .pulse-header,.mgr-kpi-strip,.mgr-sup-grid{grid-template-columns:1fr 1fr}
+  .mgr-charts-row{grid-template-columns:1fr}
+  .pulse-grid{grid-template-columns:1fr}
+  .t-form-row{grid-template-columns:1fr}
+}
+
+/* ─────────── QA FORM (from original, namespaced) ──────────── */
+#qaApp{display:none}
+.qa-wrap{max-width:1120px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.qa-top{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;padding-bottom:1.2rem;margin-bottom:1.6rem;border-bottom:1px solid var(--line)}
+.qa-brand .qa-logo{font-family:'Fraunces',serif;font-weight:700;font-size:28px;letter-spacing:-.5px;background:linear-gradient(120deg,#818cf8,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.qa-brand .qa-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-top:2px}
+.qa-qbadge .qn{font-family:'Fraunces',serif;font-size:32px;font-weight:600;line-height:1;color:var(--cyan)}
+.qa-qbadge .ql{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+.qa-layout{display:grid;grid-template-columns:1fr 340px;gap:1.4rem;align-items:start}
+@media(max-width:900px){.qa-layout{grid-template-columns:1fr}}
+.qa-card{background:linear-gradient(180deg,var(--panel),#11111c);border:1px solid var(--line);border-radius:16px;padding:1.4rem 1.5rem;position:relative;overflow:hidden}
+.qa-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,var(--indigo),var(--cyan),transparent)}
+.qa-card h2{font-family:'Fraunces',serif;font-weight:600;font-size:17px;margin-bottom:.2rem}
+.qa-card .qa-hint{font-size:11px;color:var(--muted);margin-bottom:1.1rem}
+.qa-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);margin:1.4rem 0 .7rem;display:flex;align-items:center;gap:.6rem}
+.qa-group-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.qa-group-title:first-of-type{margin-top:.2rem}
+.qa-grid{display:grid;gap:.85rem .9rem}
+.qa-g3{grid-template-columns:repeat(3,1fr)}
+.qa-g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:620px){.qa-g3,.qa-g2{grid-template-columns:1fr}}
+.qa-field{display:flex;flex-direction:column;gap:.32rem}
+.qa-field label{font-size:10.5px;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;font-weight:600;display:flex;gap:.3rem;align-items:center}
+.qa-field label .req{color:var(--indigo)}
+.qa-field input,.qa-field select,.qa-field textarea{background:var(--field);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:9px 11px;font-size:13px;font-family:inherit;transition:border-color .15s,box-shadow .15s;width:100%}
+.qa-field input::placeholder,.qa-field textarea::placeholder{color:var(--dim)}
+.qa-field select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%236b6b85' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;cursor:pointer}
+.qa-field input:focus,.qa-field select:focus,.qa-field textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(6,182,212,.12)}
+.qa-field textarea{resize:vertical;min-height:64px}
+.qa-field.invalid input,.qa-field.invalid select{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.12)}
+.qa-score-input{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.qa-scorebar{height:5px;border-radius:3px;background:rgba(79,70,229,.15);overflow:hidden;margin-top:.15rem}
+.qa-scorebar i{display:block;height:100%;border-radius:3px;transition:width .25s,background .25s}
+.qa-btn-row{display:flex;gap:.7rem;margin-top:1.5rem;flex-wrap:wrap}
+.qa-btn{border:none;border-radius:10px;font-family:'IBM Plex Sans';font-weight:700;font-size:12px;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;padding:11px 18px;transition:transform .12s,box-shadow .2s,opacity .2s;display:flex;align-items:center;gap:7px}
+.qa-btn:active{transform:translateY(1px)}
+.qa-btn-primary{background:linear-gradient(120deg,var(--indigo),#6366f1);color:#fff}
+.qa-btn-primary:hover{box-shadow:0 6px 20px rgba(79,70,229,.4)}
+.qa-btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.qa-btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.qa-side{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.1rem}
+.qa-live{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:1.2rem 1.3rem}
+.qa-live .qa-lab{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+.qa-totalwrap{display:flex;align-items:baseline;gap:.5rem;margin:.3rem 0 .1rem}
+.qa-total{font-family:'Fraunces',serif;font-size:52px;font-weight:600;line-height:.9}
+.qa-totalpct{font-size:14px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.qa-breakdown{margin-top:1rem;display:flex;flex-direction:column;gap:.55rem}
+.qa-brow{display:flex;align-items:center;gap:.6rem;font-size:11px}
+.qa-brow .qa-bn{width:78px;color:var(--muted)}
+.qa-brow .qa-bt{flex:1;height:7px;border-radius:4px;background:rgba(79,70,229,.13);overflow:hidden}
+.qa-brow .qa-bt i{display:block;height:100%;border-radius:4px}
+.qa-brow .qa-bv{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);width:30px;text-align:right}
+.qa-queue-list{display:flex;flex-direction:column;gap:.5rem;max-height:280px;overflow-y:auto}
+.qa-qitem{display:flex;align-items:center;gap:.6rem;background:var(--field);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:11.5px}
+.qa-qitem .qa-qid{font-family:'IBM Plex Mono',monospace;color:var(--cyan)}
+.qa-qitem .qa-qa{flex:1;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qa-qitem .qa-qs{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.qa-qitem .qa-qx{cursor:pointer;color:var(--dim);font-size:14px;line-height:1;padding:0 2px}
+.qa-qitem .qa-qx:hover{color:var(--red)}
+.qa-empty{color:var(--dim);font-size:11.5px;text-align:center;padding:1.4rem 0}
+.qa-export-row{display:flex;flex-direction:column;gap:.55rem;margin-top:.4rem}
+.qa-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:#15152a;border:1px solid var(--cyan);color:var(--cyan);padding:11px 20px;border-radius:10px;font-size:12.5px;font-weight:600;transition:.3s;pointer-events:none;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.qa-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.qa-toast.err{border-color:var(--red);color:var(--red)}
+details.qa-help{margin-top:1.3rem;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+details.qa-help summary{cursor:pointer;padding:.8rem 1rem;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+details.qa-help .body{padding:0 1rem 1rem;font-size:12px;color:var(--muted);line-height:1.6}
+details.qa-help code{background:var(--field);padding:1px 6px;border-radius:5px;font-family:'IBM Plex Mono',monospace;color:var(--cyan);font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SHARED PIN LOCK ════════════════════════════ -->
+<div class="pin-overlay" id="mainLock">
+  <div class="lock-card" id="mainLockCard">
+    <div class="lock-logo">N.O.W.WORLD</div>
+    <div class="lock-sub">Operations Hub</div>
+    <div class="lock-icon">🔒</div>
+    <div class="lock-label">Enter PIN to continue</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="md0"></div><div class="pin-dot" id="md1"></div>
+      <div class="pin-dot" id="md2"></div><div class="pin-dot" id="md3"></div>
+    </div>
+    <div class="numpad">
+      <button class="key" onclick="mainPin('1')">1</button><button class="key" onclick="mainPin('2')">2</button><button class="key" onclick="mainPin('3')">3</button>
+      <button class="key" onclick="mainPin('4')">4</button><button class="key" onclick="mainPin('5')">5</button><button class="key" onclick="mainPin('6')">6</button>
+      <button class="key" onclick="mainPin('7')">7</button><button class="key" onclick="mainPin('8')">8</button><button class="key" onclick="mainPin('9')">9</button>
+      <button class="key empty"></button><button class="key" onclick="mainPin('0')">0</button><button class="key del" onclick="mainPinDel()">⌫ DEL</button>
+    </div>
+    <div class="pin-err" id="mainPinErr"></div>
+  </div>
+</div>
+
+<!-- ═══════════ APP SELECTOR ════════════════════════════════ -->
+<div id="appSelector">
+  <div class="selector-wrap">
+    <div class="selector-logo">N.O.W.WORLD</div>
+    <div class="selector-sub">Operations Hub — Choose Module</div>
+    <div class="selector-cards">
+      <div class="selector-card" onclick="launchApp('task')">
+        <div class="sc-icon">📋</div>
+        <div class="sc-title">Task Tracker</div>
+        <div class="sc-desc">Supervisor task management, daily pulse monitoring, and manager oversight dashboard.</div>
+        <div class="sc-badge" style="background:rgba(79,70,229,.15);color:#a5b4fc">Supervisors & Manager</div>
+      </div>
+      <div class="selector-card" onclick="launchApp('qa')">
+        <div class="sc-icon">🎯</div>
+        <div class="sc-title">QA Submission</div>
+        <div class="sc-desc">Quality monitoring form for submitting evaluated tickets into the QA scorecard system.</div>
+        <div class="sc-badge" style="background:rgba(6,182,212,.12);color:#67e8f9">Quality Team</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BACK BUTTON -->
+<button class="back-btn" id="backBtn" onclick="goBack()">← Hub</button>
+
+<!-- ═══════════ TASK TRACKER APP ════════════════════════════ -->
+<div id="taskApp">
+  <!-- SIDEBAR -->
+  <aside class="t-sidebar">
+    <div class="t-sb-brand">
+      <div class="t-sb-logo">N.O.W.WORLD</div>
+      <div class="t-sb-sub">Task Tracker</div>
+    </div>
+    <nav class="t-sb-nav">
+      <div class="t-sb-sect">Views</div>
+      <button class="t-sb-link active" onclick="tGotoPage('pulse',this)"><span class="t-sb-icon">⚡</span>Daily Pulse</button>
+      <button class="t-sb-link" onclick="tGotoPage('board',this)"><span class="t-sb-icon">📋</span>Task Board</button>
+      <button class="t-sb-link" onclick="tGotoPage('manager',this)"><span class="t-sb-icon">📊</span>Manager Dashboard</button>
+      <div class="t-sb-divider"></div>
+      <div class="t-sb-sect">Supervisors</div>
+      <div id="t-sb-owners"></div>
+      <div class="t-sb-divider"></div>
+      <div class="t-sb-sect">Quick Filters</div>
+      <button class="t-sb-link" onclick="tQuickFilter('overdue')"><span class="t-sb-icon">🔴</span>Overdue <span class="t-sb-cnt" id="t-ov-cnt">0</span></button>
+      <button class="t-sb-link" onclick="tQuickFilter('duetoday')"><span class="t-sb-icon">🟡</span>Due Today <span class="t-sb-cnt" id="t-dt-cnt" style="background:rgba(245,158,11,.7)">0</span></button>
+      <button class="t-sb-link" onclick="tQuickFilter('reports')"><span class="t-sb-icon">📤</span>Report Tasks</button>
+    </nav>
+    <div class="t-sb-footer">
+      <div class="t-sb-date" id="t-sb-date"></div>
+      <div id="t-sb-user" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);margin-top:5px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" onclick="tChangeUser()" title="Click to change user"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="t-main">
+    <header class="t-topbar">
+      <span class="t-topbar-title" id="t-topbar-title">Daily Pulse <span class="t-topbar-sub" id="t-topbar-sub"></span></span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span id="t-sync-indicator" style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:4px 10px;border-radius:20px;background:#F3F4F6;color:#9CA3AF;letter-spacing:.3px;white-space:nowrap"></span>
+        <button class="t-btn t-btn-ghost t-btn-sm" onclick="tLoadFromSheet().then(()=>{tCheckDailyReset();tCheckAutoLate();tRefresh();tToast('Refreshed from Google Sheets.');})">↻ Refresh</button>
+        <button class="t-btn t-btn-ghost t-btn-sm" onclick="tClearFilters()">Clear filters</button>
+        <button class="t-btn t-btn-primary t-btn-sm" onclick="tOpenAdd()">＋ Add Task</button>
+      </div>
+    </header>
+
+    <!-- DAILY PULSE -->
+    <div class="t-page active t-content" id="t-page-pulse">
+      <div id="t-pulse-alert"></div>
+      <div class="pulse-header" id="t-pulse-kpis"></div>
+      <div class="pulse-grid" id="t-pulse-grid"></div>
+    </div>
+
+    <!-- TASK BOARD -->
+    <div class="t-page t-content" id="t-page-board">
+      <div id="t-board-alert"></div>
+      <div class="t-filter-row">
+        <select id="tf-owner" onchange="tRenderBoard()"><option value="">All supervisors</option>
+          <option>Amr Kabeel</option><option>Mohamed Khaled</option><option>Fares Amr</option><option>Kareem Essam</option></select>
+        <select id="tf-freq" onchange="tRenderBoard()"><option value="">All frequencies</option>
+          <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+        <select id="tf-status" onchange="tRenderBoard()"><option value="">All statuses</option>
+          <option value="pending">Pending</option><option value="done">Done</option>
+          <option value="late">Late</option><option value="na">N/A</option></select>
+        <select id="tf-priority" onchange="tRenderBoard()"><option value="">All priorities</option>
+          <option value="high">High</option><option value="med">Medium</option><option value="low">Low</option></select>
+        <span class="t-filter-count" id="t-filter-cnt"></span>
+      </div>
+      <div id="t-lanes"></div>
+    </div>
+
+    <!-- MANAGER DASHBOARD -->
+    <div class="t-page t-content" id="t-page-manager"></div>
+  </main>
+</div>
+
+<!-- MANAGER PIN OVERLAY -->
+<div class="mgr-pin-overlay" id="mgrPinOverlay">
+  <div class="lock-card" id="mgrPinCard">
+    <div class="lock-logo">Manager View</div>
+    <div class="lock-sub">Restricted Access</div>
+    <div class="lock-icon">🛡️</div>
+    <div class="lock-label">Enter manager PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="mp0"></div><div class="pin-dot" id="mp1"></div>
+      <div class="pin-dot" id="mp2"></div><div class="pin-dot" id="mp3"></div>
+    </div>
+    <div class="numpad">
+      <button class="key" onclick="mgrPin('1')">1</button><button class="key" onclick="mgrPin('2')">2</button><button class="key" onclick="mgrPin('3')">3</button>
+      <button class="key" onclick="mgrPin('4')">4</button><button class="key" onclick="mgrPin('5')">5</button><button class="key" onclick="mgrPin('6')">6</button>
+      <button class="key" onclick="mgrPin('7')">7</button><button class="key" onclick="mgrPin('8')">8</button><button class="key" onclick="mgrPin('9')">9</button>
+      <button class="key empty"></button><button class="key" onclick="mgrPin('0')">0</button><button class="key del" onclick="mgrPinDel()">⌫ DEL</button>
+    </div>
+    <div class="pin-err" id="mgrPinErr"></div>
+    <button class="t-btn t-btn-ghost t-btn-sm" onclick="cancelMgrPin()" style="margin-top:4px">Cancel</button>
+  </div>
+</div>
+
+<!-- TASK MODAL (ADD/EDIT) -->
+<div class="t-overlay" id="t-task-modal">
+  <div class="t-modal">
+    <div class="t-modal-header">
+      <span class="t-modal-title" id="t-modal-title">Add Task</span>
+      <button class="t-modal-close" onclick="tCloseModal('t-task-modal')">×</button>
+    </div>
+    <div class="t-modal-body">
+      <input type="hidden" id="t-edit-id">
+      <div class="t-form-group"><label class="t-form-label">Task name *</label>
+        <input class="t-form-ctrl" id="t-m-name" placeholder="e.g. Weekly PHD SLA report"></div>
+      <div class="t-form-group"><label class="t-form-label">Description</label>
+        <textarea class="t-form-ctrl" id="t-m-desc" rows="4" placeholder="Detailed task description…"></textarea></div>
+      <div class="t-form-row">
+        <div class="t-form-group"><label class="t-form-label">Owner</label>
+          <select class="t-form-ctrl" id="t-m-owner">
+            <option>Amr Kabeel</option><option>Mohamed Khaled</option><option>Fares Amr</option><option>Kareem Essam</option></select></div>
+        <div class="t-form-group"><label class="t-form-label">Frequency</label>
+          <select class="t-form-ctrl" id="t-m-freq">
+            <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+      </div>
+      <div class="t-form-row">
+        <div class="t-form-group"><label class="t-form-label">Priority</label>
+          <select class="t-form-ctrl" id="t-m-priority">
+            <option value="high">High</option><option value="med">Medium</option><option value="low">Low</option></select></div>
+        <div class="t-form-group" id="t-due-group"><label class="t-form-label">Due Date (monthly/delegated)</label>
+          <input class="t-form-ctrl" type="date" id="t-m-due"></div>
+      </div>
+      <label class="t-form-check"><input type="checkbox" id="t-m-report"> Reports to Operations Manager</label>
+    </div>
+    <div class="t-modal-footer">
+      <button class="t-btn t-btn-danger t-btn-sm" id="t-del-btn" onclick="tPromptDelete()" style="display:none">🗑 Delete</button>
+      <div class="t-modal-footer-r">
+        <button class="t-btn t-btn-ghost t-btn-sm" onclick="tCloseModal('t-task-modal')">Cancel</button>
+        <button class="t-btn t-btn-primary t-btn-sm" onclick="tSaveTask()">Save Task</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DESC MODAL -->
+<div class="t-overlay" id="t-desc-modal">
+  <div class="t-modal">
+    <div class="t-modal-header">
+      <span class="t-modal-title" id="t-desc-title"></span>
+      <button class="t-modal-close" onclick="tCloseModal('t-desc-modal')">×</button>
+    </div>
+    <div class="t-modal-body">
+      <div class="t-desc-modal-body" id="t-desc-body"></div>
+      <div class="t-note-area">
+        <div class="t-note-label">Note</div>
+        <div class="t-note-val" id="t-desc-note-val"></div>
+        <div class="t-note-edit-row">
+          <input class="t-form-ctrl" id="t-desc-note-input" placeholder="Add or edit note…" style="font-size:11px;padding:7px 10px">
+          <button class="t-btn t-btn-primary t-btn-sm" onclick="tSaveDescNote()">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="t-modal-footer">
+      <button class="t-btn t-btn-ghost t-btn-sm" onclick="tOpenEditFromDesc()">✏️ Edit task</button>
+      <div class="t-modal-footer-r"><button class="t-btn t-btn-ghost t-btn-sm" onclick="tCloseModal('t-desc-modal')">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="t-overlay" id="t-del-modal">
+  <div class="t-confirm-modal">
+    <div class="t-confirm-icon">🗑️</div>
+    <div class="t-confirm-title">Delete this task?</div>
+    <div class="t-confirm-text">This cannot be undone. The task and all its history will be permanently removed.</div>
+    <div class="t-confirm-actions">
+      <button class="t-btn t-btn-ghost t-btn-sm" onclick="tCloseModal('t-del-modal')">Cancel</button>
+      <button class="t-btn t-btn-danger t-btn-sm" onclick="tConfirmDelete()">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="t-toast" id="t-toast"></div>
+
+<!-- ═══════════ QA FORM APP ═════════════════════════════════ -->
+<div id="qaApp">
+<div class="qa-wrap">
+  <div class="qa-top">
+    <div class="qa-brand">
+      <div class="qa-logo">N.O.W.WORLD</div>
+      <div class="qa-sub">Quality Monitoring &middot; Submission Form</div>
+    </div>
+    <div class="qa-qbadge">
+      <span class="qn" id="qa-queueN">0</span>
+      <span class="ql">In Queue</span>
+    </div>
+  </div>
+  <div class="qa-layout">
+    <div class="qa-card">
+      <h2>New QA Evaluation</h2>
+      <div class="qa-hint">Fill the fields, add to queue, then export all queued tickets straight into the <b>Response</b> sheet.</div>
+      <div class="qa-group-title">Ticket</div>
+      <div class="qa-grid qa-g3">
+        <div class="qa-field"><label>Month <span class="req">*</span></label><select id="qa-month"></select></div>
+        <div class="qa-field"><label>Ticket ID <span class="req">*</span></label><input id="qa-ticketId" inputmode="numeric" placeholder="e.g. 1299844"></div>
+        <div class="qa-field"><label>Ticket Type</label><select id="qa-ticketType"></select></div>
+        <div class="qa-field"><label>Priority</label><select id="qa-priority"></select></div>
+        <div class="qa-field"><label>Status</label><select id="qa-status"></select></div>
+        <div class="qa-field"><label>Agent Name <span class="req">*</span></label><select id="qa-agent"></select></div>
+      </div>
+      <div class="qa-group-title">Context</div>
+      <div class="qa-grid qa-g3">
+        <div class="qa-field"><label>Supervisor</label><select id="qa-supervisor"></select></div>
+        <div class="qa-field"><label>Team</label><select id="qa-team"></select></div>
+        <div class="qa-field"><label>Shift</label><select id="qa-shift"></select></div>
+        <div class="qa-field"><label>Day of Week</label><select id="qa-day"></select></div>
+        <div class="qa-field"><label>Monitoring Date</label><input type="date" id="qa-monDate"></div>
+        <div class="qa-field"><label>Coaching Date</label><input type="date" id="qa-coachDate"></div>
+      </div>
+      <div class="qa-group-title">Scorecard (out of 7)</div>
+      <div class="qa-grid qa-g2">
+        <div class="qa-field"><label>Execution (0–3)</label><select id="qa-execution" class="qa-score-input"></select><div class="qa-scorebar"><i id="qa-execBar"></i></div></div>
+        <div class="qa-field"><label>Accuracy (0–1)</label><select id="qa-accuracy" class="qa-score-input"></select><div class="qa-scorebar"><i id="qa-accBar"></i></div></div>
+        <div class="qa-field"><label>Soft Skills (0–2)</label><select id="qa-soft" class="qa-score-input"></select><div class="qa-scorebar"><i id="qa-softBar"></i></div></div>
+        <div class="qa-field"><label>Documentation (0–1)</label><select id="qa-doc" class="qa-score-input"></select><div class="qa-scorebar"><i id="qa-docBar"></i></div></div>
+      </div>
+      <div class="qa-group-title">Mistake Tags (optional)</div>
+      <div class="qa-grid qa-g3">
+        <div class="qa-field"><label>Execution — Primary</label><select id="qa-execPrim"></select></div>
+        <div class="qa-field"><label>Execution — Sub</label><select id="qa-execSub"></select></div>
+        <div class="qa-field"><label>Execution — Detailed</label><select id="qa-execDet"></select></div>
+        <div class="qa-field"><label>Accuracy — Primary</label><select id="qa-accPrim"></select></div>
+        <div class="qa-field"><label>Accuracy — Sub</label><select id="qa-accSub"></select></div>
+        <div class="qa-field"></div>
+        <div class="qa-field"><label>Soft Skills — Primary</label><select id="qa-softPrim"></select></div>
+        <div class="qa-field"><label>Soft Skills — Sub</label><select id="qa-softSub"></select></div>
+        <div class="qa-field"><label>Soft Skills — Fix</label><select id="qa-softFix"></select></div>
+        <div class="qa-field"><label>Documentation — Primary</label><select id="qa-docPrim"></select></div>
+        <div class="qa-field"><label>Documentation — Sub</label><select id="qa-docSub"></select></div>
+        <div class="qa-field"><label>Documentation — Fix</label><select id="qa-docFix"></select></div>
+      </div>
+      <div class="qa-group-title">Notes</div>
+      <div class="qa-field"><textarea id="qa-notes" placeholder="Coaching notes / observations…"></textarea></div>
+      <div class="qa-btn-row">
+        <button class="qa-btn qa-btn-primary" onclick="qaAddToQueue()">＋ Add to Queue</button>
+        <button class="qa-btn qa-btn-ghost" onclick="qaResetForm()">Reset Fields</button>
+      </div>
+    </div>
+    <div class="qa-side">
+      <div class="qa-live">
+        <div class="qa-lab">Live Score</div>
+        <div class="qa-totalwrap">
+          <span class="qa-total" id="qa-totalScore" style="color:var(--green)">100</span>
+          <span class="qa-totalpct" id="qa-totalPct">7 / 7 · 100%</span>
+        </div>
+        <div class="qa-breakdown">
+          <div class="qa-brow"><span class="qa-bn">Execution</span><span class="qa-bt"><i id="qa-bExec" style="background:var(--indigo)"></i></span><span class="qa-bv" id="qa-vExec">3/3</span></div>
+          <div class="qa-brow"><span class="qa-bn">Accuracy</span><span class="qa-bt"><i id="qa-bAcc" style="background:var(--cyan)"></i></span><span class="qa-bv" id="qa-vAcc">1/1</span></div>
+          <div class="qa-brow"><span class="qa-bn">Soft Skills</span><span class="qa-bt"><i id="qa-bSoft" style="background:var(--green)"></i></span><span class="qa-bv" id="qa-vSoft">2/2</span></div>
+          <div class="qa-brow"><span class="qa-bn">Documentation</span><span class="qa-bt"><i id="qa-bDoc" style="background:var(--amber)"></i></span><span class="qa-bv" id="qa-vDoc">1/1</span></div>
+        </div>
+      </div>
+      <div class="qa-live">
+        <div class="qa-lab" style="margin-bottom:.7rem">Queued Tickets</div>
+        <div class="qa-queue-list" id="qa-queueList"><div class="qa-empty">No tickets queued yet.</div></div>
+        <div class="qa-export-row">
+          <button class="qa-btn qa-btn-primary" style="justify-content:center" onclick="qaCopyRows()">⊙ Copy for Excel paste</button>
+          <button class="qa-btn qa-btn-ghost" style="justify-content:center" onclick="qaDownloadCSV()">↓ Download CSV</button>
+          <button class="qa-btn qa-btn-ghost" style="justify-content:center" onclick="qaClearQueue()">Clear Queue</button>
+        </div>
+      </div>
+      <details class="qa-help" open>
+        <summary>How to paste into the workbook</summary>
+        <div class="body">
+          <b>Easiest — append to the bottom:</b><br>
+          1. Click <b>Copy for Excel paste</b>.<br>
+          2. Open the <code>Response</code> sheet. Press <code>Ctrl+End</code> to jump to the last used row, click the cell in <b>column A</b> of the next empty row, and paste (<code>Ctrl+V</code>).<br><br>
+          Columns are written in the exact order the sheet expects (A→AF). Your queue is saved in this browser.
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+<div class="qa-toast" id="qa-toast"></div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SHARED PIN LOGIC
+// ═══════════════════════════════════════════════════════════════
+const MAIN_PIN = '0606';
+const MGR_PIN  = '1206';
+let mainPinEntry = '';
+let mgrPinEntry  = '';
+let mgrPinUnlocked = false;
+let mainLockActive = true; // true while the main PIN screen is visible
+
+function mainPin(d){ if(mainPinEntry.length>=4)return; mainPinEntry+=d; updateMainDots(); if(mainPinEntry.length===4)setTimeout(checkMainPin,80); }
+function mainPinDel(){ if(!mainPinEntry.length)return; mainPinEntry=mainPinEntry.slice(0,-1); updateMainDots(); document.getElementById('mainPinErr').textContent=''; }
+function updateMainDots(){ for(let i=0;i<4;i++){const d=document.getElementById('md'+i);d.classList.toggle('filled',i<mainPinEntry.length);d.classList.remove('error');} }
+function checkMainPin(){
+  if(mainPinEntry===MAIN_PIN){
+    mainLockActive=false;
+    document.getElementById('mainLock').style.display='none';
+    document.getElementById('appSelector').style.display='flex';
+  } else {
+    for(let i=0;i<4;i++){const d=document.getElementById('md'+i);d.classList.add('error');d.classList.remove('filled');}
+    document.getElementById('mainPinErr').textContent='Incorrect PIN — try again';
+    const c=document.getElementById('mainLockCard');c.classList.add('shake');
+    setTimeout(()=>{c.classList.remove('shake');mainPinEntry='';updateMainDots();},400);
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(mainLockActive){
+    if(e.key>='0'&&e.key<='9')mainPin(e.key);
+    if(e.key==='Backspace')mainPinDel();
+    return;
+  }
+  if(document.getElementById('mgrPinOverlay')?.classList?.contains('open')){
+    if(e.key>='0'&&e.key<='9')mgrPin(e.key);
+    if(e.key==='Backspace')mgrPinDel();
+  }
+});
+
+function mgrPin(d){ if(mgrPinEntry.length>=4)return; mgrPinEntry+=d; updateMgrDots(); if(mgrPinEntry.length===4)setTimeout(checkMgrPin,80); }
+function mgrPinDel(){ if(!mgrPinEntry.length)return; mgrPinEntry=mgrPinEntry.slice(0,-1); updateMgrDots(); document.getElementById('mgrPinErr').textContent=''; }
+function updateMgrDots(){ for(let i=0;i<4;i++){const d=document.getElementById('mp'+i);d.classList.toggle('filled',i<mgrPinEntry.length);d.classList.remove('error');} }
+function checkMgrPin(){
+  if(mgrPinEntry===MGR_PIN){
+    mgrPinUnlocked=true;
+    document.getElementById('mgrPinOverlay').classList.remove('open');
+    // Now properly activate the manager page
+    document.querySelectorAll('.t-page').forEach(e=>e.classList.remove('active'));
+    document.querySelectorAll('.t-sb-link').forEach(e=>e.classList.remove('active'));
+    document.getElementById('t-page-manager').classList.add('active');
+    if(_pendingMgrBtn)_pendingMgrBtn.classList.add('active');
+    tActivePage='manager';
+    document.getElementById('t-topbar-title').innerHTML='Manager Dashboard<span class="t-topbar-sub"> · Week of '+tWeekStr()+'</span>';
+    tRenderManager();
+    _pendingMgrBtn=null;
+  } else {
+    for(let i=0;i<4;i++){const d=document.getElementById('mp'+i);d.classList.add('error');d.classList.remove('filled');}
+    document.getElementById('mgrPinErr').textContent='Incorrect PIN — try again';
+    const c=document.getElementById('mgrPinCard');c.classList.add('shake');
+    setTimeout(()=>{c.classList.remove('shake');mgrPinEntry='';updateMgrDots();},400);
+  }
+}
+function cancelMgrPin(){ document.getElementById('mgrPinOverlay').classList.remove('open');mgrPinEntry='';updateMgrDots(); }
+
+function launchApp(which){
+  document.getElementById('appSelector').style.display='none';
+  document.getElementById('backBtn').style.display='flex';
+  if(which==='task'){ document.getElementById('taskApp').style.display='flex'; tInit(); }
+  if(which==='qa')  { document.getElementById('qaApp').style.display='block'; qaInit(); }
+}
+function goBack(){
+  document.getElementById('taskApp').style.display='none';
+  document.getElementById('qaApp').style.display='none';
+  document.getElementById('backBtn').style.display='none';
+  document.getElementById('appSelector').style.display='flex';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TASK TRACKER ENGINE
+// ═══════════════════════════════════════════════════════════════
+const T_OWNERS = {
+  "Amr Kabeel":     {abbr:"AK",color:"#4f46e5",light:"rgba(79,70,229,.15)",role:"Asst. Operations Manager"},
+  "Mohamed Khaled": {abbr:"MK",color:"#059669",light:"rgba(5,150,105,.15)",role:"PHD Supervisor"},
+  "Fares Amr":      {abbr:"FA",color:"#d97706",light:"rgba(217,119,6,.15)",role:"After Sale Supervisor"},
+  "Kareem Essam":   {abbr:"KE",color:"#7c3aed",light:"rgba(124,58,237,.15)",role:"Recon & Recon Supervisor"},
+};
+const T_STATUS = {
+  pending:{label:"Pending",cls:"ts-pending",hex:"#f59e0b"},
+  done:   {label:"Done",   cls:"ts-done",   hex:"#10b981"},
+  late:   {label:"Late",   cls:"ts-late",   hex:"#ef4444"},
+  na:     {label:"N/A",    cls:"ts-na",     hex:"#6b7280"},
+};
+const T_FREQ_CLS = {daily:"tb-daily",weekly:"tb-weekly",monthly:"tb-monthly"};
+const T_FREQ_LBL = {daily:"Daily",weekly:"Weekly",monthly:"Monthly"};
+const T_PRIO_HEX = {high:"#ef4444",med:"#f59e0b",low:"#10b981"};
+
+// ── GOOGLE SHEETS CONFIG ───────────────────────────────────────────────
+// Paste your Apps Script Web App URL here after deploying.
+// Leave as '' to run in offline/localStorage-only mode.
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw48lFkfXK_p_kP6aVEpKmyqO0HGWMhVtMURlv3Y32YFqeh1bz217qPRZbAPnGKBPBZag/exec';  // e.g. 'https://script.google.com/macros/s/XXXXX/exec'
+
+const TSK  = {tasks:"now5_tasks",status:"now5_status",notes:"now5_notes",hist:"now5_hist",doneTs:"now5_doneTs"};
+function tls(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}}
+function tlsw(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+// ── SYNC STATE ──────────────────────────────────────────────────────────
+let _syncUser   = '';     // who is using this session
+let _syncOnline = false;  // true once Sheets connection confirmed
+let _syncPending= [];     // queue of writes that haven't been sent yet
+let _syncRetryTimer = null;
+
+// ── GET/SET SESSION USER ─────────────────────────────────────────────────
+function tGetUser(){
+  if(_syncUser)return _syncUser;
+  _syncUser = sessionStorage.getItem('now_user')||'';
+  return _syncUser;
+}
+function tEnsureUser(){
+  if(tGetUser())return true;
+  const name = prompt(
+    'Welcome to NowWorld Operations Hub\n\n' +
+    'Enter your name so your changes are attributed correctly:\n' +
+    '(e.g. "Amr Kabeel" or "Manager")');
+  if(!name||!name.trim()){
+    tToast('Name is required to use the tracker.',true);
+    return false;
+  }
+  _syncUser = name.trim();
+  sessionStorage.setItem('now_user', _syncUser);
+  return true;
+}
+
+// ── SYNC INDICATOR ───────────────────────────────────────────────────────
+function tShowSyncState(state){
+  // state: 'syncing' | 'ok' | 'offline' | 'error'
+  let el = document.getElementById('t-sync-indicator');
+  if(!el) return;
+  const cfg = {
+    syncing: {bg:'#EEF2FF',color:'#4F46E5',text:'⟳ Syncing…'},
+    ok:      {bg:'#ECFDF5',color:'#059669',text:'✓ Synced'},
+    offline: {bg:'#FEF3C7',color:'#D97706',text:'⚡ Offline (local)'},
+    error:   {bg:'#FEE2E2',color:'#DC2626',text:'⚠ Sync error'},
+  };
+  const c = cfg[state]||cfg.offline;
+  el.style.background = c.bg;
+  el.style.color = c.color;
+  el.textContent = c.text;
+}
+
+// ── LOAD FROM SHEETS ─────────────────────────────────────────────────────
+async function tLoadFromSheet(){
+  if(!SHEET_URL){tShowSyncState('offline');return;}
+  tShowSyncState('syncing');
+  try{
+    const res = await fetch(SHEET_URL+'?t='+Date.now(), {method:'GET'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'Sheet error');
+
+    // Merge Sheet data → local state (Sheet wins over localStorage)
+    if(data.statuses && Object.keys(data.statuses).length > 0){
+      tStatus  = data.statuses;
+      tNotes   = data.notes   || {};
+      tDoneTs  = data.doneTs  || {};
+      tHistory = data.history || {};
+      // Also persist to localStorage as offline cache
+      tSaveLocal();
+    }
+
+    // Merge custom tasks from sheet
+    if(data.customTasks && data.customTasks.length > 0){
+      const seedIds = new Set(tSeedTasks().map(t=>t.id));
+      const existing = new Set(tTasks.map(t=>t.id));
+      data.customTasks.forEach(t=>{
+        if(!seedIds.has(t.id) && !existing.has(t.id)){
+          tTasks.push(t);
+        } else if(!seedIds.has(t.id) && existing.has(t.id)){
+          // Update existing custom task
+          const idx = tTasks.findIndex(x=>x.id===t.id);
+          if(idx>-1) tTasks[idx]=t;
+        }
+      });
+      tlsw(TSK.tasks, tTasks);
+    }
+
+    _syncOnline = true;
+    tShowSyncState('ok');
+
+    // Flush any pending writes that accumulated while loading
+    _flushPending();
+
+  }catch(err){
+    console.warn('Sheet load failed:', err);
+    _syncOnline = false;
+    tShowSyncState('offline');
+    // Fallback: use localStorage data (already loaded in tInit before this call)
+  }
+}
+
+// ── WRITE TO SHEETS ──────────────────────────────────────────────────────
+async function tSheetWrite(payload){
+  if(!SHEET_URL){return;}
+  try{
+    const res = await fetch(SHEET_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      // Note: Apps Script requires text/plain for cross-origin POST
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'Write error');
+    tShowSyncState('ok');
+    return true;
+  }catch(err){
+    console.warn('Sheet write failed:', err);
+    _syncOnline = false;
+    tShowSyncState('error');
+    // Queue for retry
+    _syncPending.push(payload);
+    _scheduleRetry();
+    return false;
+  }
+}
+
+function _scheduleRetry(){
+  if(_syncRetryTimer)return;
+  _syncRetryTimer = setTimeout(async()=>{
+    _syncRetryTimer = null;
+    await _flushPending();
+  }, 30000); // retry after 30s
+}
+
+async function _flushPending(){
+  if(!SHEET_URL||_syncPending.length===0)return;
+  const toSend = [..._syncPending];
+  _syncPending = [];
+  tShowSyncState('syncing');
+  for(const p of toSend){
+    try{
+      const res = await fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(p)});
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error);
+    }catch(err){
+      _syncPending.push(p); // re-queue
+    }
+  }
+  tShowSyncState(_syncPending.length===0?'ok':'offline');
+  if(_syncPending.length>0) _scheduleRetry();
+}
+
+// ── SAVE HELPERS ─────────────────────────────────────────────────────────
+function tSaveLocal(){
+  // Saves only dynamic state (not tasks — those use separate key)
+  tlsw(TSK.status,tStatus);
+  tlsw(TSK.notes,tNotes);
+  tlsw(TSK.hist,tHistory);
+  tlsw(TSK.doneTs,tDoneTs);
+}
+
+let tTasks   = null;
+let tStatus  = {};
+let tNotes   = {};
+let tHistory = {};
+let tDoneTs  = {}; // taskId → timestamp when marked done (for daily reset logic)
+let tActivePage = 'pulse';
+let tDescId  = null;
+let tEditId  = null;
+let tDelId   = null;
+let tSbOwner = '';
+let tFilterReports = false;
+let _pendingMgrBtn = null; // stores the btn ref while waiting for mgr PIN
+
+function tSave(){ tlsw(TSK.tasks,tTasks);tSaveLocal(); } // tSaveLocal handles dynamic state; Sheet writes happen in specific functions
+
+// ── TIME HELPERS ───────────────────────────────────────────────
+function tTodayStr(){ const d=new Date();return`${d.getFullYear()}-${tp2(d.getMonth()+1)}-${tp2(d.getDate())}` }
+function tp2(n){return String(n).padStart(2,'0')}
+function tNowTs(){return Date.now()}
+function tFmtDate(d){if(!d)return'—';const[y,m,dy]=d.split('-');const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return`${parseInt(dy)} ${M[parseInt(m)-1]}`}
+function tNowStr(){return new Date().toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function tWeekStr(){const d=new Date(),dy=d.getDay();const m=new Date(d);m.setDate(d.getDate()-dy+(dy===0?-6:1));return m.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+
+// ── AUTO DUE DATE CALCULATION ──────────────────────────────────
+function tComputeDue(task){
+  const now = new Date();
+  if(task.freq==='daily'){
+    // Due today at 17:30
+    const due = new Date(now);
+    due.setHours(17,30,0,0);
+    return due;
+  }
+  if(task.freq==='weekly'){
+    // Due next Sunday (day 0)
+    const due = new Date(now);
+    const day = due.getDay();
+    const diff = day===0 ? 0 : 7-day; // days until next Sunday (0 = today if Sunday)
+    due.setDate(due.getDate()+diff);
+    due.setHours(17,30,0,0);
+    return due;
+  }
+  // Monthly: use stored dueDate
+  if(task.dueDate){
+    const [y,m,d]=task.dueDate.split('-');
+    const due=new Date(parseInt(y),parseInt(m)-1,parseInt(d),17,30,0,0);
+    return due;
+  }
+  return null;
+}
+
+function tDeliveryOf(task){
+  const due = tComputeDue(task);
+  if(!due)return'nodue';
+  const st = tStatus[task.id]||'pending';
+  if(st==='done'||st==='na')return'ontrack';
+  const now = new Date();
+  if(now>due)return'overdue';
+  const todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
+  const todayDue=new Date();todayDue.setHours(17,30,0,0);
+  if(now>=todayMidnight&&now<=todayDue&&task.freq==='daily')return'duetoday';
+  // Check if same calendar day for weekly/monthly
+  const dueDate=`${due.getFullYear()}-${tp2(due.getMonth()+1)}-${tp2(due.getDate())}`;
+  if(dueDate===tTodayStr())return'duetoday';
+  return'ontrack';
+}
+
+function tDeliveryBadge(ds){
+  if(ds==='overdue')  return'<span class="t-badge tb-overdue">⚠ Overdue</span>';
+  if(ds==='duetoday') return'<span class="t-badge tb-duetoday">⏰ Due Today</span>';
+  if(ds==='ontrack')  return'<span class="t-badge tb-ontrack">✓ On Track</span>';
+  return'<span class="t-badge tb-nodue">No due date</span>';
+}
+
+function tDueLabel(task){
+  const due=tComputeDue(task);
+  if(!due)return'No due date';
+  if(task.freq==='daily')return'Today 17:30';
+  if(task.freq==='weekly'){
+    const dueDate=`${due.getFullYear()}-${tp2(due.getMonth()+1)}-${tp2(due.getDate())}`;
+    if(dueDate===tTodayStr())return'Today (Sun) 17:30';
+    return`Sun ${tFmtDate(due.toISOString().slice(0,10))}`;
+  }
+  return task.dueDate?tFmtDate(task.dueDate):'—';
+}
+
+// ── DAILY RESET LOGIC ──────────────────────────────────────────
+function tCheckDailyReset(){
+  const today=tTodayStr();
+  let changed=false;
+  tTasks.filter(t=>t.freq==='daily').forEach(t=>{
+    const st=tStatus[t.id]||'pending';
+    if(st==='done'||st==='late'){
+      const ts=tDoneTs[t.id];
+      if(!ts)return;
+      const doneDay=new Date(ts).toISOString().slice(0,10);
+      if(doneDay<today){
+        tStatus[t.id]='pending';
+        delete tDoneTs[t.id];
+        changed=true;
+      }
+    }
+  });
+  if(changed)tSave();
+}
+
+// ── AUTO LATE FOR DAILY ────────────────────────────────────────
+function tCheckAutoLate(){
+  const now=new Date();
+  let changed=false;
+  tTasks.filter(t=>t.freq==='daily').forEach(t=>{
+    const st=tStatus[t.id]||'pending';
+    if(st==='pending'){
+      const due=tComputeDue(t);
+      if(due&&now>due){
+        tStatus[t.id]='late';
+        tAddHist(t.id,'late','Auto');
+        changed=true;
+      }
+    }
+  });
+  if(changed){tSaveLocal();}
+}
+
+function tEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── INIT ───────────────────────────────────────────────────────
+function tInit(){
+  if(!tTasks){ tTasks=tls(TSK.tasks,null)||tSeedTasks(); }
+  // Load local cache first so UI renders instantly
+  tStatus  = tls(TSK.status,{});
+  tNotes   = tls(TSK.notes,{});
+  tHistory = tls(TSK.hist,{});
+  tDoneTs  = tls(TSK.doneTs,{});
+  tCheckDailyReset();
+  tCheckAutoLate();
+  tRenderSidebar();
+  tRenderPulse();
+  document.getElementById('t-sb-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('t-topbar-sub').textContent=`· Week of ${tWeekStr()}`;
+  // Auto-check late every minute
+  setInterval(()=>{tCheckAutoLate();tRefresh();},60000);
+  // Daily reset at midnight
+  scheduleNextMidnight();
+  // Ask for user name if not set
+  setTimeout(()=>{ if(SHEET_URL&&!tGetUser())tEnsureUser(); },500);
+  // Load live data from Google Sheets (async — updates UI when ready)
+  tLoadFromSheet().then(()=>{
+    tCheckDailyReset();
+    tCheckAutoLate();
+    tRefresh();
+  });
+}
+
+function scheduleNextMidnight(){
+  const now=new Date();
+  const midnight=new Date(now);midnight.setDate(now.getDate()+1);midnight.setHours(0,0,5,0);
+  const ms=midnight-now;
+  setTimeout(()=>{tCheckDailyReset();tRefresh();scheduleNextMidnight();},ms);
+}
+
+// ── NAV ────────────────────────────────────────────────────────
+function tGotoPage(p,btn){
+  if(p==='manager'&&!mgrPinUnlocked){
+    _pendingMgrBtn=btn;
+    document.getElementById('mgrPinOverlay').classList.add('open');
+    return;
+  }
+  document.querySelectorAll('.t-page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.t-sb-link').forEach(e=>e.classList.remove('active'));
+  document.getElementById('t-page-'+p).classList.add('active');
+  if(btn)btn.classList.add('active');
+  tActivePage=p;
+  const titles={pulse:'Daily Pulse',board:'Task Board',manager:'Manager Dashboard'};
+  document.getElementById('t-topbar-title').innerHTML=`${titles[p]}<span class="t-topbar-sub" id="t-topbar-sub"> · Week of ${tWeekStr()}</span>`;
+  if(p==='pulse')  tRenderPulse();
+  if(p==='board')  tRenderBoard();
+  if(p==='manager')tRenderManager();
+}
+
+function tQuickFilter(type){
+  tSbOwner='';tFilterReports=false;
+  document.querySelectorAll('.t-sb-owner').forEach(e=>e.classList.remove('active'));
+  if(type==='overdue'){document.getElementById('tf-status').value='';document.getElementById('tf-freq').value='';
+    window._tDeliveryFilter='overdue'; tGotoPage('board',document.querySelectorAll('.t-sb-link')[1]);}
+  else if(type==='duetoday'){window._tDeliveryFilter='duetoday'; tGotoPage('board',document.querySelectorAll('.t-sb-link')[1]);}
+  else if(type==='reports'){tFilterReports=true;window._tDeliveryFilter=''; tGotoPage('board',document.querySelectorAll('.t-sb-link')[1]);}
+}
+function tClearFilters(){
+  tSbOwner='';tFilterReports=false;window._tDeliveryFilter='';
+  ['tf-owner','tf-freq','tf-status','tf-priority'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.querySelectorAll('.t-sb-owner').forEach(e=>e.classList.remove('active'));
+  tRefresh();
+}
+
+// ── SIDEBAR ────────────────────────────────────────────────────
+function tRenderSidebar(){
+  const list=document.getElementById('t-sb-owners');
+  list.innerHTML=Object.entries(T_OWNERS).map(([name,o])=>`
+    <div class="t-sb-owner" onclick="tFilterOwner('${name}',this)">
+      <span class="t-owner-dot" style="background:${o.color}"></span>
+      <span>${o.abbr} ${name.split(' ')[0]}</span>
+    </div>`).join('');
+  const ov=tTasks.filter(t=>tDeliveryOf(t)==='overdue').length;
+  const dt=tTasks.filter(t=>tDeliveryOf(t)==='duetoday').length;
+  document.getElementById('t-ov-cnt').textContent=ov;
+  document.getElementById('t-dt-cnt').textContent=dt;
+}
+function tFilterOwner(name,el){
+  tSbOwner=name;document.getElementById('tf-owner').value=name;
+  document.querySelectorAll('.t-sb-owner').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  tRefresh();
+}
+
+// ── DAILY PULSE ────────────────────────────────────────────────
+function tRenderPulse(){
+  tRenderSidebar();
+  const today=tTodayStr();
+  const dailyTasks=tTasks.filter(t=>t.freq==='daily');
+
+  // KPI strip
+  const kpis=document.getElementById('t-pulse-kpis');
+  kpis.innerHTML=Object.entries(T_OWNERS).map(([name,o])=>{
+    const mine=dailyTasks.filter(t=>t.owner===name);
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const pct=mine.length?Math.round(done/mine.length*100):0;
+    const late=mine.filter(t=>(tStatus[t.id]||'pending')==='late').length;
+    return`<div class="pulse-kpi" style="--owner-color:${o.color}">
+      <div class="pulse-kpi-name">${o.abbr} · ${name.split(' ')[0]}</div>
+      <div class="pulse-kpi-val">${pct}%</div>
+      <div class="pulse-kpi-sub">${done}/${mine.length} daily done${late?` · <span style="color:#f87171">${late} late</span>`:''}</div>
+      <div class="pulse-kpi-bar"><div class="pulse-kpi-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Alert
+  const el=document.getElementById('t-pulse-alert');
+  const ov=dailyTasks.filter(t=>tDeliveryOf(t)==='overdue').length;
+  const dt=dailyTasks.filter(t=>tDeliveryOf(t)==='duetoday').length;
+  if(ov>0||dt>0){
+    const cls=ov>0?'t-alert-danger':'t-alert-warn';
+    const parts=[];if(ov)parts.push(`${ov} daily task${ov>1?'s':''} overdue`);if(dt)parts.push(`${dt} due by 17:30 today`);
+    el.innerHTML=`<div class="t-alert ${cls}"><span>⚠ ${parts.join(' · ')}</span><button class="t-alert-dismiss" onclick="this.parentElement.remove()">×</button></div>`;
+  } else { el.innerHTML=''; }
+
+  // Supervisor cards
+  const grid=document.getElementById('t-pulse-grid');
+  grid.innerHTML=Object.entries(T_OWNERS).map(([name,o])=>{
+    const mine=dailyTasks.filter(t=>t.owner===name);
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const pct=mine.length?Math.round(done/mine.length*100):0;
+    const pctColor=pct>=80?'#10b981':pct>=50?'#f59e0b':'#ef4444';
+
+    const rows=mine.map(t=>{
+      const st=tStatus[t.id]||'pending';
+      const sm=T_STATUS[st];
+      const ds=tDeliveryOf(t);
+      const opts=Object.entries(T_STATUS).map(([k,m])=>`<option value="${k}"${st===k?' selected':''}>${m.label}</option>`).join('');
+      return`<div class="pulse-task-row">
+        <span class="pulse-status-dot" style="background:${sm.hex}"></span>
+        <span class="pulse-task-name" onclick="tOpenDesc('${t.id}')" style="cursor:pointer" title="${tEsc(t.name)}">${tEsc(t.name)}</span>
+        <span class="pulse-due-tag ${ds==='overdue'?'tb-overdue':ds==='duetoday'?'tb-duetoday':''}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim)">17:30</span>
+        <select class="t-status-select ${sm.cls}" style="padding:3px 6px;font-size:9px;min-width:75px" onchange="tSetStatus('${t.id}',this.value,this)">${opts}</select>
+      </div>`;
+    }).join('');
+
+    return`<div class="pulse-sup-card">
+      <div class="pulse-sup-header">
+        <div class="pulse-sup-av" style="background:${o.color}">${o.abbr}</div>
+        <div><div class="pulse-sup-name">${name}</div><div class="pulse-sup-role">${o.role}</div></div>
+        <div class="pulse-sup-pct" style="color:${pctColor}">${pct}%</div>
+      </div>
+      ${rows||'<div class="t-empty" style="padding:1rem"><div class="t-empty-icon" style="font-size:20px">✓</div><div>No daily tasks</div></div>'}
+    </div>`;
+  }).join('');
+}
+
+// ── TASK BOARD ─────────────────────────────────────────────────
+function tGetFiltered(){
+  const fo=document.getElementById('tf-owner')?.value||'';
+  const ff=document.getElementById('tf-freq')?.value||'';
+  const fs=document.getElementById('tf-status')?.value||'';
+  const fp=document.getElementById('tf-priority')?.value||'';
+  const fd=window._tDeliveryFilter||'';
+  return tTasks.filter(t=>{
+    if(fo&&t.owner!==fo)return false;
+    if(ff&&t.freq!==ff)return false;
+    if(fs&&(tStatus[t.id]||'pending')!==fs)return false;
+    if(fp&&t.priority!==fp)return false;
+    if(fd&&tDeliveryOf(t)!==fd)return false;
+    if(tFilterReports&&!t.report)return false;
+    return true;
+  });
+}
+
+function tRenderBoard(){
+  tRenderSidebar();
+  const filtered=tGetFiltered();
+  document.getElementById('t-filter-cnt').textContent=`${filtered.length} task${filtered.length!==1?'s':''}`;
+  const container=document.getElementById('t-lanes');
+  if(!filtered.length){container.innerHTML='<div class="t-empty"><div class="t-empty-icon">📭</div><div>No tasks match the current filters.</div></div>';return;}
+  const fo=document.getElementById('tf-owner').value;
+  const owners=fo?[fo]:Object.keys(T_OWNERS);
+
+  container.innerHTML=owners.map(owner=>{
+    const o=T_OWNERS[owner];
+    const mine=filtered.filter(t=>t.owner===owner);
+    if(!mine.length)return'';
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const late=mine.filter(t=>(tStatus[t.id]||'pending')==='late').length;
+    const pct=Math.round(done/mine.length*100);
+    const pctColor=pct>=80?'#10b981':pct>=50?'#f59e0b':'#ef4444';
+
+    const freqGroups=['daily','weekly','monthly'].map(freq=>{
+      const g=mine.filter(t=>t.freq===freq);
+      if(!g.length)return'';
+      return`<div class="t-lane-freq-group">
+        <div class="t-freq-label" style="color:${o.color};font-weight:700">${T_FREQ_LBL[freq]}</div>
+        <div class="t-cards-grid">${g.map(t=>tRenderCard(t)).join('')}</div>
+      </div>`;
+    }).join('');
+
+    return`<div class="t-lane">
+      <div class="t-lane-header" style="background:${o.color}" onclick="tToggleLane('${owner.replace(/ /g,'_')}')">
+        <div class="t-lane-avatar">${o.abbr}</div>
+        <div class="t-lane-info"><div class="t-lane-name">${owner}</div><div class="t-lane-role">${o.role}</div></div>
+        <div class="t-lane-stats">
+          <span>${done}/${mine.length} done</span>${late?`<span>· <span style="color:#fca5a5">${late} late</span></span>`:''}
+        </div>
+        <div class="t-lane-pct" style="color:${pctColor}">${pct}%</div>
+        <span class="t-lane-toggle" id="lt-${owner.replace(/ /g,'_')}">▼</span>
+      </div>
+      <div id="lb-${owner.replace(/ /g,'_')}">${freqGroups}</div>
+    </div>`;
+  }).join('');
+}
+
+function tToggleLane(key){
+  const b=document.getElementById('lb-'+key);const t=document.getElementById('lt-'+key);
+  if(!b)return;const h=b.style.display==='none';b.style.display=h?'':'none';if(t)t.textContent=h?'▼':'▶';
+}
+
+function tRenderCard(t){
+  const o=T_OWNERS[t.owner];
+  const st=tStatus[t.id]||'pending';
+  const sm=T_STATUS[st];
+  const ds=tDeliveryOf(t);
+  const dueLabel=tDueLabel(t);
+  const dueClass=ds==='overdue'?' overdue':ds==='duetoday'?' duetoday':'';
+  const opts=Object.entries(T_STATUS).map(([k,m])=>`<option value="${k}"${st===k?' selected':''}>${m.label}</option>`).join('');
+  const hasNote=!!(tNotes[t.id]);
+  return`<div class="t-card">
+    <div class="t-card-strip" style="background:${T_PRIO_HEX[t.priority]||'#6b7280'}"></div>
+    <div class="t-card-body" onclick="tOpenDesc('${t.id}')">
+      <div class="t-card-name">${tEsc(t.name)}${t.report?'<span class="t-badge tb-report" style="margin-left:6px;vertical-align:middle">📤</span>':''}</div>
+      <div class="t-card-badges">
+        ${tDeliveryBadge(ds)}
+        ${hasNote?'<span class="t-badge" style="background:rgba(255,255,255,.06);color:var(--muted)">📝</span>':''}
+      </div>
+      <div class="t-card-due${dueClass}">📅 ${dueLabel}</div>
+    </div>
+    <div class="t-card-footer" onclick="event.stopPropagation()">
+      <select class="t-status-select ${sm.cls}" onchange="tSetStatus('${t.id}',this.value,this)">${opts}</select>
+      <div class="t-card-btns">
+        <button class="t-card-btn" onclick="tOpenDesc('${t.id}')" title="View">👁</button>
+        <button class="t-card-btn" onclick="tOpenEdit('${t.id}')" title="Edit">✏️</button>
+        <button class="t-card-btn danger" onclick="tPromptDelete('${t.id}')" title="Delete">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── STATUS ─────────────────────────────────────────────────────
+function tSetStatus(id,val,selEl){
+  if(!tEnsureUser())return;
+  tStatus[id]=val;
+  if(val==='done'||val==='late'){tDoneTs[id]=Date.now();}
+  else{delete tDoneTs[id];}
+  const user=tGetUser();
+  tAddHist(id,val,user);
+  tSaveLocal();
+  if(selEl){['ts-pending','ts-done','ts-late','ts-na'].forEach(c=>selEl.classList.remove(c));selEl.classList.add(T_STATUS[val].cls);}
+  tRenderSidebar();
+  if(tActivePage==='manager')tRenderManager();
+  // Write to Sheets async
+  const t=tTasks.find(x=>x.id===id);
+  tSheetWrite({action:'setStatus',taskId:id,taskName:t?t.name:'',owner:t?t.owner:'',
+    status:val,note:tNotes[id]||'',changedBy:user,doneTs:tDoneTs[id]||''});
+}
+
+// ── MANAGER DASHBOARD ──────────────────────────────────────────
+function tRenderManager(){
+  const page=document.getElementById('t-page-manager');
+  // Preserve filter values across re-renders (they live inside innerHTML)
+  const ff   = document.getElementById('mf-freq2')?.value||'';
+  const fown = document.getElementById('mf-owner2')?.value||'';
+
+  const kpiHtml=Object.entries(T_OWNERS).map(([name,o])=>{
+    let mine=tTasks.filter(t=>t.owner===name&&(!ff||t.freq===ff));
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const late=mine.filter(t=>(tStatus[t.id]||'pending')==='late').length;
+    const pend=mine.filter(t=>(tStatus[t.id]||'pending')==='pending').length;
+    const over=mine.filter(t=>tDeliveryOf(t)==='overdue').length;
+    const pct=mine.length?Math.round(done/mine.length*100):0;
+    return`<div class="mgr-kpi" style="--owner-color:${o.color}">
+      <div class="mgr-kpi-abbr">${o.abbr} · ${name.split(' ')[0]}</div>
+      <div class="mgr-kpi-val">${pct}%</div>
+      <div class="mgr-kpi-sub" style="font-size:9px;color:#9CA3AF">${o.role}</div>
+      <div class="mgr-kpi-pills">
+        <span class="mgr-pill mp-green">✓ ${done}</span>
+        <span class="mgr-pill mp-gray">${pend} pending</span>
+        ${late?`<span class="mgr-pill mp-red">⚠ ${late} late</span>`:''}
+        ${over?`<span class="mgr-pill mp-amber">🕐 ${over} overdue</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Charts
+  const totalT=tTasks.length;
+  const totalDone=tTasks.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+  const totalLate=tTasks.filter(t=>(tStatus[t.id]||'pending')==='late').length;
+  const totalPend=tTasks.filter(t=>(tStatus[t.id]||'pending')==='pending').length;
+  const totalOver=tTasks.filter(t=>tDeliveryOf(t)==='overdue').length;
+
+  const freqRows=['daily','weekly','monthly'].map(f=>{
+    const mine=tTasks.filter(t=>t.freq===f);
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const pct=mine.length?Math.round(done/mine.length*100):0;
+    const colors={daily:'#4f46e5',weekly:'#059669',monthly:'#d97706'};
+    return`<div class="mgr-bar-row">
+      <div class="mgr-bar-label">${T_FREQ_LBL[f]}</div>
+      <div class="mgr-bar-track"><div class="mgr-bar-fill" style="width:${pct}%;background:${colors[f]}"></div></div>
+      <div class="mgr-bar-val">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  const ownerRows=Object.entries(T_OWNERS).map(([name,o])=>{
+    let mine=tTasks.filter(t=>t.owner===name);
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const pct=mine.length?Math.round(done/mine.length*100):0;
+    return`<div class="mgr-bar-row">
+      <div class="mgr-bar-label">${o.abbr}</div>
+      <div class="mgr-bar-track"><div class="mgr-bar-fill" style="width:${pct}%;background:${o.color}"></div></div>
+      <div class="mgr-bar-val">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  const metricRows=[
+    {label:'Total tasks',val:totalT,color:'#8a8aa0'},
+    {label:'Completed',val:totalDone,color:'#10b981'},
+    {label:'Pending',val:totalPend,color:'#f59e0b'},
+    {label:'Late',val:totalLate,color:'#ef4444'},
+    {label:'Overdue (by time)',val:totalOver,color:'#dc2626'},
+  ].map(r=>`<div class="mgr-metric-row">
+    <div class="mgr-metric-label"><span style="width:9px;height:9px;border-radius:50%;background:${r.color};display:inline-block"></span>${r.label}</div>
+    <div class="mgr-metric-val" style="color:${r.color}">${r.val}</div>
+  </div>`).join('');
+
+  // Supervisor breakdown
+  const supGrid=Object.entries(T_OWNERS).map(([name,o])=>{
+    const ff2=document.getElementById('mf-freq2')?.value||'';
+    let mine=tTasks.filter(t=>t.owner===name&&(!ff2||t.freq===ff2));
+    const done=mine.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+    const late=mine.filter(t=>(tStatus[t.id]||'pending')==='late').length;
+    const pend=mine.filter(t=>(tStatus[t.id]||'pending')==='pending').length;
+    const over=mine.filter(t=>tDeliveryOf(t)==='overdue').length;
+    const pct=mine.length?Math.round(done/mine.length*100):0;
+    const cir=2*Math.PI*16;const fill=(pct/100)*cir;
+
+    const taskItems=mine.map(t=>{
+      const st=tStatus[t.id]||'pending';const sm=T_STATUS[st];
+      const ds=tDeliveryOf(t);
+      const hist=(tHistory[t.id]||[]).slice().reverse().slice(0,3);
+      const ob=Object.entries(T_STATUS).map(([k,m])=>
+        `<button class="mgr-ob ${m.cls}${st===k?' active':''}" onclick="tMgrOverride('${t.id}','${k}')">${m.label}</button>`
+      ).join('');
+      const histHtml=hist.length?hist.map(h=>`<div class="mgr-hist-row"><span style="color:${T_STATUS[h.status]?.hex||'#888'};font-weight:600">${T_STATUS[h.status]?.label||h.status}</span> · ${tEsc(h.by)} · ${tEsc(h.at)}</div>`).join(''):'<div class="mgr-hist-row">No history</div>';
+      return`<div class="mgr-task-item" onclick="tToggleMgrExpand('mex-${t.id}')">
+        <span style="width:7px;height:7px;border-radius:50%;background:${sm.hex};flex-shrink:0"></span>
+        <span class="mgr-task-name" title="${tEsc(t.name)}">${tEsc(t.name)}</span>
+        <span class="t-badge ${T_FREQ_CLS[t.freq]}" style="font-size:8px">${T_FREQ_LBL[t.freq]}</span>
+        ${tDeliveryBadge(ds)}
+        ${t.report?'<span class="t-badge tb-report" style="font-size:8px">📤</span>':''}
+        <span style="font-size:9px;color:var(--dim);flex-shrink:0">▼</span>
+      </div>
+      <div class="mgr-task-expand" id="mex-${t.id}">
+        ${t.desc?`<div style="font-size:10px;color:#4B5563;line-height:1.7;white-space:pre-wrap;margin-bottom:10px">${tEsc(t.desc)}</div>`:''}
+        ${tNotes[t.id]?`<div style="font-size:10px;color:#0E7490;background:#ECFEFF;border-left:2px solid #06B6D4;padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:8px">📝 ${tEsc(tNotes[t.id])}</div>`:''}
+        <div style="font-size:9px;color:#9CA3AF;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;font-weight:700">OVERRIDE STATUS</div>
+        <div class="mgr-override-btns">${ob}</div>
+        <div style="margin-top:10px"><div class="mgr-hist-title">Change History</div>${histHtml}</div>
+      </div>`;
+    }).join('');
+
+    return`<div class="mgr-sup-card">
+      <div class="mgr-sup-header">
+        <div class="mgr-sup-av" style="background:${o.color}">${o.abbr}</div>
+        <div style="flex:1;min-width:0"><div class="mgr-sup-name">${name}</div><div class="mgr-sup-role">${o.role}</div></div>
+        <div class="mgr-sup-ring">
+          <svg viewBox="0 0 40 40" width="40" height="40">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="5"/>
+            <circle cx="20" cy="20" r="16" fill="none" stroke="${o.color}" stroke-width="5"
+              stroke-dasharray="${fill.toFixed(2)} ${cir.toFixed(2)}"
+              stroke-linecap="round" transform="rotate(-90 20 20)"/>
+            <text x="20" y="20" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="800" fill="${o.color}" font-family="Fraunces">${pct}%</text>
+          </svg>
+        </div>
+      </div>
+      <div class="mgr-sup-stats">
+        <div class="mgr-sup-stat"><div class="mgr-sup-stat-val" style="color:#10b981">${done}</div><div class="mgr-sup-stat-lbl">Done</div></div>
+        <div class="mgr-sup-stat"><div class="mgr-sup-stat-val" style="color:#D97706">${pend}</div><div class="mgr-sup-stat-lbl">Pending</div></div>
+        <div class="mgr-sup-stat"><div class="mgr-sup-stat-val" style="color:${late?'#ef4444':'#4b5563'}">${late}</div><div class="mgr-sup-stat-lbl">Late</div></div>
+        <div class="mgr-sup-stat"><div class="mgr-sup-stat-val" style="color:${over?'#dc2626':'#4b5563'}">${over}</div><div class="mgr-sup-stat-lbl">Overdue</div></div>
+      </div>
+      ${taskItems}
+    </div>`;
+  }).join('');
+
+  // History feed
+  const allHist=[];
+  Object.entries(tHistory).forEach(([tid,entries])=>{
+    const t=tTasks.find(x=>x.id===tid);if(!t)return;
+    entries.forEach(h=>allHist.push({...h,tName:t.name,owner:t.owner}));
+  });
+  allHist.sort((a,b)=>b.at.localeCompare(a.at));
+  const feedHtml=allHist.slice(0,12).map(h=>{
+    const o=T_OWNERS[h.owner]||{color:'#888',abbr:'?'};
+    const sm=T_STATUS[h.status]||{label:h.status,hex:'#888'};
+    return`<div class="feed-item">
+      <div class="feed-dot" style="background:${sm.hex}">${sm.label.charAt(0)}</div>
+      <div class="feed-body">
+        <div class="feed-title">${tEsc(h.tName)}</div>
+        <div class="feed-sub">→ <strong style="color:${sm.hex}">${sm.label}</strong> · ${tEsc(h.by)} · <span style="color:${o.color}">${o.abbr}</span></div>
+      </div>
+      <div class="feed-time">${tEsc(h.at)}</div>
+    </div>`;
+  }).join('')||'<div style="font-size:11px;color:#9CA3AF;text-align:center;padding:1rem">No activity yet.</div>';
+
+  page.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><div style="font-family:\'Fraunces\',serif;font-size:15px;font-weight:600">Manager Dashboard</div>
+        <div style="font-size:10px;color:#9CA3AF;font-family:\'IBM Plex Mono\',monospace">Week of ${tWeekStr()}</div></div>
+      <select id="mf-owner2" onchange="tRenderManager()" style="padding:6px 10px;border-radius:7px;font-size:11px;border:1px solid #D1D5DB;background:#ffffff;color:#374151">
+        <option value="">All supervisors</option>
+        <option value="Amr Kabeel">Amr Kabeel</option>
+        <option value="Mohamed Khaled">Mohamed Khaled</option>
+        <option value="Fares Amr">Fares Amr</option>
+        <option value="Kareem Essam">Kareem Essam</option>
+      </select>
+      <select id="mf-freq2" onchange="tRenderManager()" style="padding:6px 10px;border-radius:7px;font-size:11px;border:1px solid #D1D5DB;background:#ffffff;color:#374151">
+        <option value="">All frequencies</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option>
+      </select>
+      <button class="t-btn t-btn-primary t-btn-sm" onclick="tDownloadPDF()" style="margin-left:4px">⬇ Download PDF Report</button>
+    </div>
+    <div class="mgr-kpi-strip">${kpiHtml}</div>
+    <div class="mgr-charts-row">
+      <div class="mgr-chart-card">
+        <div class="mgr-chart-title">Completion by Frequency</div>
+        <div class="mgr-chart-sub">% done per cycle type</div>
+        ${freqRows}
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line2)">${ownerRows}</div>
+      </div>
+      <div class="mgr-chart-card">
+        <div class="mgr-chart-title">At-a-Glance Metrics</div>
+        <div class="mgr-chart-sub">Full department snapshot</div>
+        ${metricRows}
+      </div>
+      <div class="mgr-chart-card">
+        <div class="mgr-chart-title">Activity Feed</div>
+        <div class="mgr-chart-sub">Latest status changes</div>
+        <div style="max-height:220px;overflow-y:auto">${feedHtml}</div>
+      </div>
+    </div>
+    <div style="font-family:\'Fraunces\',serif;font-size:14px;font-weight:600;margin-bottom:12px;color:#1A1D23">Supervisor Breakdown</div>
+    <div class="mgr-sup-grid">${supGrid}</div>`;
+  tRestoreMgrFilters(ff,fown);
+}
+
+function tRestoreMgrFilters(ff,fown){
+  const s1=document.getElementById('mf-freq2');if(s1&&ff)s1.value=ff;
+  const s2=document.getElementById('mf-owner2');if(s2&&fown)s2.value=fown;
+}
+function _afterMgrRender(ff,fown){tRestoreMgrFilters(ff,fown);}
+function tToggleMgrExpand(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+function tMgrOverride(id,val){
+  if(!tEnsureUser())return;
+  tStatus[id]=val;
+  if(val==='done'||val==='late'){tDoneTs[id]=Date.now();}else{delete tDoneTs[id];}
+  const user=tGetUser();
+  tAddHist(id,val,user);
+  tSaveLocal();
+  tRenderManager();
+  const t=tTasks.find(x=>x.id===id);
+  tSheetWrite({action:'setStatus',taskId:id,taskName:t?t.name:'',owner:t?t.owner:'',
+    status:val,note:tNotes[id]||'',changedBy:user,doneTs:tDoneTs[id]||''});
+}
+
+// ── ADD/EDIT MODAL ─────────────────────────────────────────────
+function tOpenAdd(){
+  tEditId=null;
+  document.getElementById('t-modal-title').textContent='Add New Task';
+  document.getElementById('t-edit-id').value='';
+  document.getElementById('t-m-name').value='';
+  document.getElementById('t-m-desc').value='';
+  document.getElementById('t-m-owner').value='Amr Kabeel';
+  document.getElementById('t-m-freq').value='daily';
+  document.getElementById('t-m-priority').value='high';
+  document.getElementById('t-m-due').value='';
+  document.getElementById('t-m-report').checked=false;
+  document.getElementById('t-del-btn').style.display='none';
+  tOpenModal('t-task-modal');
+  document.getElementById('t-m-name').focus();
+}
+function tOpenEdit(id){
+  const t=tTasks.find(x=>x.id===id);if(!t)return;
+  tEditId=id;
+  document.getElementById('t-modal-title').textContent='Edit Task';
+  document.getElementById('t-edit-id').value=id;
+  document.getElementById('t-m-name').value=t.name;
+  document.getElementById('t-m-desc').value=t.desc||'';
+  document.getElementById('t-m-owner').value=t.owner;
+  document.getElementById('t-m-freq').value=t.freq;
+  document.getElementById('t-m-priority').value=t.priority;
+  document.getElementById('t-m-due').value=t.dueDate||'';
+  document.getElementById('t-m-report').checked=!!t.report;
+  document.getElementById('t-del-btn').style.display='';
+  tOpenModal('t-task-modal');
+}
+function tSaveTask(){
+  const name=document.getElementById('t-m-name').value.trim();
+  if(!name){tToast('Task name is required.',true);return;}
+  const id=tEditId||('c_'+Date.now());
+  const freq=document.getElementById('t-m-freq').value;
+  const task={id,name,
+    desc:document.getElementById('t-m-desc').value.trim(),
+    owner:document.getElementById('t-m-owner').value,
+    freq,priority:document.getElementById('t-m-priority').value,
+    dueDate:freq==='monthly'?(document.getElementById('t-m-due').value||null):null,
+    report:document.getElementById('t-m-report').checked};
+  if(tEditId){
+    const i=tTasks.findIndex(x=>x.id===tEditId);if(i>-1)tTasks[i]=task;
+    tlsw(TSK.tasks,tTasks);
+    // Only sync custom tasks to Sheet (seed tasks are baked into HTML)
+    if(task.custom)tSheetWrite({action:'updateTask',task});
+  } else {
+    tTasks.push(task);
+    tlsw(TSK.tasks,tTasks);
+    if(task.custom)tSheetWrite({action:'addTask',task});
+  }
+  tCloseModal('t-task-modal');tRefresh();tToast(tEditId?'Task updated.':'Task added.');
+}
+function tPromptDelete(id){tDelId=id||tEditId;tCloseModal('t-task-modal');tOpenModal('t-del-modal');}
+function tConfirmDelete(){
+  if(!tDelId)return;
+  const deletedTask=tTasks.find(t=>t.id===tDelId);
+  tTasks=tTasks.filter(t=>t.id!==tDelId);
+  delete tStatus[tDelId];delete tNotes[tDelId];delete tHistory[tDelId];delete tDoneTs[tDelId];
+  tlsw(TSK.tasks,tTasks);tSaveLocal();
+  tCloseModal('t-del-modal');
+  const deletedId=tDelId;tDelId=null;
+  tRefresh();tToast('Task deleted.');
+  if(deletedTask&&deletedTask.custom)tSheetWrite({action:'deleteTask',taskId:deletedId});
+}
+
+// ── DESC MODAL ─────────────────────────────────────────────────
+function tOpenDesc(id){
+  const t=tTasks.find(x=>x.id===id);if(!t)return;
+  tDescId=id;
+  document.getElementById('t-desc-title').textContent=t.name;
+  document.getElementById('t-desc-body').textContent=t.desc||'No description added.';
+  const nt=tNotes[id]||'';
+  document.getElementById('t-desc-note-val').textContent=nt||'No note yet.';
+  document.getElementById('t-desc-note-input').value=nt;
+  tOpenModal('t-desc-modal');
+}
+function tSaveDescNote(){
+  if(!tDescId)return;
+  if(!tEnsureUser())return;
+  tNotes[tDescId]=document.getElementById('t-desc-note-input').value;
+  tSaveLocal();
+  document.getElementById('t-desc-note-val').textContent=tNotes[tDescId]||'No note yet.';
+  tToast('Note saved.');
+  tSheetWrite({action:'setNote',taskId:tDescId,note:tNotes[tDescId],changedBy:tGetUser()});
+}
+function tOpenEditFromDesc(){tCloseModal('t-desc-modal');tOpenEdit(tDescId);}
+
+// ── MODAL HELPERS ──────────────────────────────────────────────
+function tOpenModal(id){document.getElementById(id).classList.add('open');}
+function tCloseModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.t-overlay').forEach(ov=>{ov.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.t-overlay.open').forEach(el=>el.classList.remove('open'));});
+
+// ── HISTORY ────────────────────────────────────────────────────
+function tAddHist(id,status,by){
+  if(!tHistory[id])tHistory[id]=[];
+  tHistory[id].push({status,by,at:tNowStr()});
+  if(tHistory[id].length>30)tHistory[id]=tHistory[id].slice(-30);
+}
+
+// ── REFRESH ────────────────────────────────────────────────────
+function tRefresh(){
+  tRenderSidebar();
+  if(tActivePage==='pulse')tRenderPulse();
+  if(tActivePage==='board')tRenderBoard();
+  if(tActivePage==='manager'&&mgrPinUnlocked)tRenderManager();
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+let tToastTimer;
+function tToast(msg,err){
+  const t=document.getElementById('t-toast');t.textContent=msg;
+  t.className='t-toast show'+(err?' err':'');
+  clearTimeout(tToastTimer);tToastTimer=setTimeout(()=>t.className='t-toast',3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEED TASKS (UPDATED STRUCTURE)
+// ═══════════════════════════════════════════════════════════════
+function tSeedTasks(){return[
+// ── KAREEM ESSAM ──────────────────────────────────────────────
+{id:"ke1",owner:"Kareem Essam",freq:"daily",priority:"high",report:false,dueDate:null,name:"Pending reconfirmation dispatch",
+desc:"At shift start: extract from the Back Office all hotel bookings with check-in date = tomorrow that have not yet received HCN (Hotel Confirmation Number). Verify the list is complete and accurate. Distribute to Recon team agents with clear assignment — which agent handles which bookings — and set a shift completion target. Do not proceed to other tasks until dispatch is confirmed and logged."},
+{id:"ke2",owner:"Kareem Essam",freq:"daily",priority:"high",report:false,dueDate:null,name:"HCN collection progress monitoring",
+desc:"Monitor HCN collection progress throughout the shift at minimum at:\n(1) 2 hours after dispatch\n(2) Midshift\n(3) 1 hour before shift end\n\nFor any booking still without HCN at midshift:\n(a) Confirm agent has contacted the hotel\n(b) Escalate to a senior agent if hotel is non-responsive\n(c) Log as 'pending – non-responsive hotel' if unconfirmed by shift end\n\nEnd-of-shift target: 100% of bookings either confirmed with HCN or logged with escalation reason."},
+{id:"ke3",owner:"Kareem Essam",freq:"daily",priority:"high",report:false,dueDate:null,name:"System reconciliation workspace check",
+desc:"Each shift, monitor the 4-tab system reconciliation workspace:\n\nTab 1 – Static/Local: Agents updating status against LPO log. Any booked-but-not-confirmed entry older than 24 hours is flagged.\n\nTab 2 – Dynamic: Extranet/back-office cross-check is current. Status must match on both sides.\n\nTab 3 – Online Supplier/TPS: XML logs reviewed and booking status updated. Flag any XML mismatch.\n\nTab 4 – Exceptions/Discrepancies: All open exceptions have an owner and a due date. No entry left without an action.\n\nEnd-of-shift: confirm all four tabs are updated and no entry is stale beyond its threshold."},
+{id:"ke4",owner:"Kareem Essam",freq:"daily",priority:"high",report:false,dueDate:null,name:"Discrepancy & escalation log",
+desc:"Maintain a daily discrepancy log for all items that cannot be resolved within the shift. Each entry must contain:\n- Booking ID and hotel name\n- Discrepancy type (no HCN / wrong status / missing booking / non-responsive hotel / system mismatch)\n- Agent assigned\n- Action taken and result\n- Escalation path if unresolved (→ Amr Kabeel → Operations Manager)\n\nReview the log at each shift handover and carry forward open items until resolved."},
+{id:"ke5",owner:"Kareem Essam",freq:"daily",priority:"med",report:false,dueDate:null,name:"Recon team schedule management",
+desc:"Maintain and publish the Reconfirmation & Reconciliation team schedule. Ensure adequate coverage especially on the early morning shift (highest reconfirmation volume). Update the NowWorld Shifts app and notify agents at least 48 hours in advance of planned changes. Provide the weekly schedule to Amr Kabeel for cross-team review before the week begins."},
+{id:"ke6",owner:"Kareem Essam",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Weekly reconfirmation completion report → Amr Kabeel",
+desc:"Submit weekly to Amr Kabeel (due Sunday):\n(1) Total bookings dispatched for reconfirmation during the week\n(2) HCN collection rate: % confirmed within same shift, % within 24 hours, % still pending at week end\n(3) Non-responsive hotels list: hotels that failed to provide HCN within 48 hours across the week\n(4) Escalated bookings: count, reason, and resolution status\n(5) End-of-week open items with full detail\n(6) Agent-level completion rates\n\nSubmit alongside the schedule for the following week."},
+{id:"ke7",owner:"Kareem Essam",freq:"weekly",priority:"high",report:false,dueDate:null,name:"Reconciliation workspace quality check",
+desc:"Structured quality review of the 4-tab workspace each week:\n(1) Sample 5–8 Static/Local entries — status updated correctly, LPO issued, no open discrepancy\n(2) Sample 5–8 Dynamic entries — extranet cross-check completed and status matches\n(3) Sample 3–5 Online Supplier entries — XML logs reviewed, booking confirmation accurate\n(4) All Exceptions tab entries — each has an assigned owner and has not stalled\n\nDocument findings and discuss deviations individually with agents."},
+{id:"ke8",owner:"Kareem Essam",freq:"weekly",priority:"med",report:false,dueDate:null,name:"Non-responsive supplier tracking",
+desc:"Maintain a running weekly log of hotels and suppliers that failed to provide HCN responses within the expected window. Log per entry: hotel/supplier name and city, number of unconfirmed bookings this week, days since first contact attempt, method of contact used (email, phone, extranet).\n\nAfter 2 consecutive weeks of non-response from the same hotel, escalate to Amr Kabeel with a recommendation to flag to the supplier relations team or account manager."},
+{id:"ke9",owner:"Kareem Essam",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly recon & system performance report → Amr Kabeel",
+desc:"Submit by the 2nd of the following month to Amr Kabeel:\n(1) HCN collection rate for the full month: overall % and week-by-week trend\n(2) Non-responsive supplier league table: top 10 hotels by unconfirmed booking count\n(3) Discrepancy count by type and resolution rate per type\n(4) Workspace compliance rate: % of reconciliation tasks completed within the correct time threshold\n(5) Agent-level performance: completion rates, escalation counts, accuracy scores\n(6) Repeat exceptions — bookings or hotels appearing in the exception log more than twice in the month"},
+{id:"ke10",owner:"Kareem Essam",freq:"monthly",priority:"med",report:false,dueDate:null,name:"Monthly SOP compliance review – Recon",
+desc:"Monthly check of SOP adherence. Pull 3–5 cases per SOP:\n(1) Hotel reconfirmation workflow — HCN chased via all required channels before escalation?\n(2) HCN update in Back Office — updated immediately after receipt?\n(3) Reconciliation workspace — all four tabs updated correctly within the shift?\n(4) Discrepancy escalation — unresolved items properly logged and escalated?\n\nScore per SOP. Agents below 80% on two or more SOPs receive a retraining session that month. Submit findings to Amr Kabeel."},
+
+// ── FARES AMR ─────────────────────────────────────────────────
+{id:"fa1",owner:"Fares Amr",freq:"daily",priority:"high",report:false,dueDate:null,name:"After Sale overdue & handover dispatch",
+desc:"At each shift start, send the overdue-ticket list and the handover-ticket sheet to all After Sale team agents. The overdue list is pulled from Freshdesk filtered to After Sale tickets open beyond the SLA threshold. The handover sheet covers tickets marked 'in handover' from the prior shift. Both must be dispatched before agents begin handling new tickets. Log the dispatch time each day. No exceptions."},
+{id:"fa2",owner:"Fares Amr",freq:"daily",priority:"high",report:false,dueDate:null,name:"Cross-team adherence & absenteeism tracking",
+desc:"Maintain daily adherence records for both After Sale and PHD teams. Track:\n(1) Shift start times — did agents log in on time?\n(2) Absences — planned vs. unplanned, reason code if provided\n(3) No-shows — immediately notify Amr Kabeel\n(4) Early departures — document agent name, time, and reason\n\nUpdate the attendance log daily. This is the primary source for the weekly consolidated report to Kabeel."},
+{id:"fa3",owner:"Fares Amr",freq:"daily",priority:"high",report:false,dueDate:null,name:"Manual payment handling – After Sale accounts",
+desc:"Process or triage all manual card payment requests and card-exception cases from After Sale partner accounts. Coordinate with Amr Kabeel for requests requiring manager authorization. Log every case: partner name, booking ID, request type, action taken, resolution time. Unresolved payment requests must be documented clearly in the shift handover sheet."},
+{id:"fa4",owner:"Fares Amr",freq:"daily",priority:"med",report:false,dueDate:null,name:"After Sale schedule management",
+desc:"Maintain and update the After Sale team schedule. Reflect approved leave and excuses immediately. Communicate planned changes at least 48 hours in advance. Emergency changes communicated immediately. Ensure 24/7 coverage with no uncovered slot. Provide weekly schedule to Amr Kabeel for the cross-team review before the week begins."},
+{id:"fa5",owner:"Fares Amr",freq:"daily",priority:"high",report:false,dueDate:null,name:"After Sale customer responded queue hourly observation",
+desc:"Every hour throughout the shift, check the After Sale Freshdesk queue for tickets where the customer has responded but no agent action has been taken. Flag any ticket with a customer response older than 30 minutes without an agent reply. Assign to the next available agent or intervene directly if the SLA is about to be breached. Log observations each hour — this is the primary mechanism preventing tickets from going stale mid-shift."},
+{id:"fa6",owner:"Fares Amr",freq:"weekly",priority:"high",report:true,dueDate:null,name:"After Sale first-response & resolution SLA validation report → Amr Kabeel",
+desc:"Submit weekly to Amr Kabeel (due Sunday):\n(1) After Sale first-response SLA % per agent for the week\n(2) After Sale resolution SLA % per agent for the week\n(3) All SLA-violated tickets: ticket ID, agent, breach type (FR or RES), breach duration, root cause\n(4) Agents with multiple breaches: flag for coaching\n(5) Week-over-week SLA trend: improving, stable, or declining\n\nFor each breached ticket, document whether: (a) the agent added an internal note, (b) the partner was notified, and (c) a coaching conversation took place."},
+{id:"fa7",owner:"Fares Amr",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Weekly adherence & absenteeism report → Amr Kabeel",
+desc:"Submit weekly to Amr Kabeel (due Sunday):\n(1) Planned headcount per shift per day vs. actual\n(2) Absences per agent: reason code (Sick, Emergency, Unapproved, Planned)\n(3) Late arrivals per agent per team\n(4) No-shows: agent name, date, impact on coverage\n(5) Shift adherence % per team (After Sale + PHD)\n(6) Repeat absenteeism flags: any agent with 2+ absences this week\n(7) Coverage gaps that impacted service\n\nThis report feeds directly into Kabeel's department-level report to the Operations Manager."},
+{id:"fa8",owner:"Fares Amr",freq:"weekly",priority:"high",report:true,dueDate:null,name:"After Sale quality submission — 5 cases per team member → Amr Kabeel",
+desc:"Each week, review 5 tickets per After Sale agent (minimum). Score each ticket against the QA scorecard criteria:\n(1) Execution: correct SOP followed, correct action taken\n(2) Accuracy: information provided was factually correct\n(3) Soft Skills: professional tone, grammar, proper greeting, brand voice\n(4) Documentation: correct ticket type, status, subtype, outcome summary\n\nSubmit the scored cases to Amr Kabeel using the QA module or the standard submission format. Agents with two consecutive below-threshold weeks are flagged for individual coaching. Submit by Sunday."},
+{id:"fa9",owner:"Fares Amr",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly After Sale adherence & absenteeism report → Amr Kabeel",
+desc:"Submit by the 2nd of the following month to Amr Kabeel:\n(1) Full-month adherence table per agent: days present, absent, late arrivals, no-shows, unpaid leave\n(2) Absenteeism rate per team vs. prior month\n(3) Shift coverage gaps during the month and their cause\n(4) Agents flagged for recurring absenteeism (3+ absences in the month)\n(5) Planned leave calendar for the following month (if available)"},
+{id:"fa10",owner:"Fares Amr",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly After Sale SLA violated tickets review → Amr Kabeel",
+desc:"End-of-month comprehensive review of all SLA-violated tickets for After Sale across the full month. Identify:\n- Agents with highest breach counts and trend direction (improving / worsening)\n- Case types most associated with breaches (e.g., relocation cases consistently late)\n- Time-of-day or shift patterns in breaches\n- Whether coaching from prior months is producing results\n\nOutput: a findings document submitted to Amr Kabeel alongside the monthly quality report. Submit by the 2nd."},
+{id:"fa11",owner:"Fares Amr",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly After Sale quality evaluation report — 20 cases per staff → Amr Kabeel",
+desc:"At month end, conduct a comprehensive quality evaluation for each After Sale agent: 20 tickets per agent reviewed and scored on the full QA scorecard (Execution, Accuracy, Soft Skills, Documentation).\n\nReport includes:\n(1) Agent-level quality score for the month\n(2) Score trend vs. prior month\n(3) Top recurring error categories per agent\n(4) Agents recommended for coaching, retraining, or recognition\n(5) Team-level quality average\n\nSubmit to Amr Kabeel using the QA module export or standard format by the 2nd of the following month."},
+
+// ── MOHAMED KHALED ────────────────────────────────────────────
+{id:"mk1",owner:"Mohamed Khaled",freq:"daily",priority:"high",report:false,dueDate:null,name:"PHD overdue & handover dispatch",
+desc:"At each shift start, send the overdue-ticket list and the handover-ticket sheet to all PHD team agents. The overdue list is pulled from Freshdesk filtered to PHD tickets open beyond the SLA threshold. The handover sheet covers tickets marked 'in handover' from the prior shift. Both must be dispatched before agents begin handling new tickets. Log the dispatch time each day. No exceptions."},
+{id:"mk2",owner:"Mohamed Khaled",freq:"daily",priority:"high",report:false,dueDate:null,name:"Cross-team adherence & absenteeism tracking",
+desc:"Maintain daily adherence records for the PHD team. Track:\n(1) Shift start times — did agents log in on time?\n(2) Absences — planned vs. unplanned, reason code if provided\n(3) No-shows — immediately notify Amr Kabeel\n(4) Early departures — document agent name, time, and reason\n\nUpdate the attendance log daily and share with Fares Amr for the consolidated cross-team report."},
+{id:"mk3",owner:"Mohamed Khaled",freq:"daily",priority:"high",report:false,dueDate:null,name:"Manual payment handling – PHD accounts",
+desc:"Process or triage all manual card payment requests and card-exception cases from PHD partner accounts. Coordinate with Amr Kabeel for requests requiring manager authorization. Log every case: partner name, booking ID, request type, action taken, resolution time. Do not leave any payment request unresolved at shift handover — document clearly for the incoming supervisor."},
+{id:"mk4",owner:"Mohamed Khaled",freq:"daily",priority:"med",report:false,dueDate:null,name:"PHD schedule management",
+desc:"Maintain and update the PHD team schedule. Communicate planned changes at least 48 hours in advance. Emergency changes communicated immediately. Ensure at least one senior agent is always on shift during PHD operating hours (08:30–24:00). Provide the weekly schedule to Amr Kabeel for the cross-team review before the week begins."},
+{id:"mk5",owner:"Mohamed Khaled",freq:"daily",priority:"high",report:false,dueDate:null,name:"PHD customer responded queue hourly observation",
+desc:"Every hour throughout the shift, check the PHD Freshdesk queue for tickets where the customer has responded but no agent action has been taken. Flag any ticket with a customer response older than 15 minutes without a reply (PHD SLA is tighter than After Sale). Assign to the next available senior agent or intervene directly if a VIP account is involved. Log observations each hour."},
+{id:"mk6",owner:"Mohamed Khaled",freq:"weekly",priority:"high",report:true,dueDate:null,name:"PHD first-response & resolution SLA validation report → Amr Kabeel",
+desc:"Submit weekly to Amr Kabeel (due Sunday):\n(1) PHD first-response SLA % per agent for the week\n(2) PHD resolution SLA % per agent for the week\n(3) All SLA-violated tickets: ticket ID, agent, breach type (FR or RES), breach duration, root cause\n(4) VIP partner SLA misses: partner name, ticket ID, response time recorded\n(5) Agents with multiple breaches: flag for coaching\n(6) Week-over-week SLA trend\n\nFor each breached ticket: document whether the agent added an internal note, the partner was notified, and a coaching conversation took place."},
+{id:"mk7",owner:"Mohamed Khaled",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Weekly adherence & absenteeism report → Amr Kabeel",
+desc:"Submit weekly to Amr Kabeel (due Sunday):\n(1) Planned headcount per shift per day vs. actual\n(2) Absences per agent: reason code (Sick, Emergency, Unapproved, Planned)\n(3) Late arrivals per agent\n(4) No-shows: agent name, date, impact on coverage\n(5) Shift adherence % for PHD\n(6) Repeat absenteeism flags: any agent with 2+ absences this week\n(7) Coverage gaps that impacted service\n\nCoordinate with Fares Amr to ensure consistency with the cross-team consolidated report to Kabeel."},
+{id:"mk8",owner:"Mohamed Khaled",freq:"weekly",priority:"high",report:true,dueDate:null,name:"PHD quality submission — 5 cases per team member → Amr Kabeel",
+desc:"Each week, review 5 tickets per PHD agent (minimum). Score each ticket against the QA scorecard criteria:\n(1) Execution: correct SOP followed, correct action taken\n(2) Accuracy: information provided was factually correct\n(3) Soft Skills: professional tone, grammar, proper greeting, brand voice\n(4) Documentation: correct ticket type, status, subtype, outcome summary\n\nSubmit the scored cases to Amr Kabeel using the QA module or the standard submission format. Agents with two consecutive below-threshold weeks are flagged for individual coaching. Submit by Sunday."},
+{id:"mk9",owner:"Mohamed Khaled",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly adherence & absenteeism report → Amr Kabeel",
+desc:"Submit by the 2nd of the following month to Amr Kabeel:\n(1) Full-month adherence table per PHD agent: days present, absent, late arrivals, no-shows, unpaid leave\n(2) Absenteeism rate vs. prior month\n(3) Shift coverage gaps during the month and their cause\n(4) Agents flagged for recurring absenteeism (3+ absences in the month)\n(5) Planned leave calendar for the following month (if available)"},
+{id:"mk10",owner:"Mohamed Khaled",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly PHD SLA violated tickets review → Amr Kabeel",
+desc:"End-of-month comprehensive review of all SLA-violated tickets for PHD across the full month. Identify:\n- Agents with highest breach counts and trend direction\n- Case types and partner types most associated with breaches\n- Time-of-day or shift patterns in breaches\n- VIP accounts that received repeated SLA misses\n- Whether coaching from prior months is producing results\n\nOutput: a findings document submitted to Amr Kabeel alongside the monthly quality report. Submit by the 2nd."},
+{id:"mk11",owner:"Mohamed Khaled",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Monthly PHD quality evaluation report — 20 cases per staff → Amr Kabeel",
+desc:"At month end, conduct a comprehensive quality evaluation for each PHD agent: 20 tickets per agent reviewed and scored on the full QA scorecard (Execution, Accuracy, Soft Skills, Documentation).\n\nReport includes:\n(1) Agent-level quality score for the month\n(2) Score trend vs. prior month\n(3) Top recurring error categories per agent\n(4) Agents recommended for coaching, retraining, or recognition\n(5) Team-level quality average\n(6) VIP account quality flag: any VIP-related tickets that scored below threshold\n\nSubmit to Amr Kabeel using the QA module export or standard format by the 2nd of the following month."},
+
+// ── AMR KABEEL ────────────────────────────────────────────────
+{id:"ak1",owner:"Amr Kabeel",freq:"daily",priority:"high",report:false,dueDate:null,name:"Pending reconfirmation dispatch oversight",
+desc:"Verify that Kareem Essam has dispatched the pending reconfirmation bookings list to the Recon team at shift start. Do not rely on Kareem's confirmation alone — cross-check the Back Office to confirm the bookings list was accurate and complete at time of dispatch.\n\nIf Kareem has not dispatched by the agreed cut-off time:\n(1) Contact Kareem immediately\n(2) If unreachable, dispatch directly\n(3) Log the delay as an incident in the daily oversight record\n\nMark this task Done only once confirmed."},
+{id:"ak2",owner:"Amr Kabeel",freq:"daily",priority:"high",report:false,dueDate:null,name:"Overdue & handover dispatch oversight",
+desc:"Confirm that both Fares Amr (After Sale) and Mohamed Khaled (PHD) have sent their overdue-ticket and handover-ticket sheets to their respective team agents at shift start.\n\nVerification method: request confirmation from each supervisor or check Freshdesk for evidence of dispatch (e.g., group email, internal note).\n\nIf either supervisor has not dispatched by the agreed cut-off:\n(1) Contact the supervisor immediately\n(2) Log the incident with supervisor name, delay duration, and reason given\n(3) Flag as non-compliance if it is a repeated occurrence this week\n\nMark Done only once both supervisors have confirmed."},
+{id:"ak3",owner:"Amr Kabeel",freq:"daily",priority:"high",report:false,dueDate:null,name:"Manual payment settlement coverage",
+desc:"Ensure all manual card payment requests and card-on-file exceptions raised during the shift are processed or triaged. Coordinate with Khaled and Fares for requests originating from their respective teams.\n\nMaintain a settlement log for each case:\n- Booking ID\n- Agent who raised the request\n- Request time\n- Action taken (processed / escalated / pending)\n- Settled by and settlement time\n\nUnresolved settlements at shift end must be handed over in writing to the next senior available. Any request that has been unresolved for more than 2 hours must be escalated to the Operations Manager."},
+{id:"ak4",owner:"Amr Kabeel",freq:"daily",priority:"high",report:false,dueDate:null,name:"Staff adherence & absenteeism schedule updates oversight",
+desc:"Confirm that:\n(1) Fares Amr has updated the After Sale and PHD adherence log for the current shift\n(2) Mohamed Khaled has updated the PHD attendance for the current shift\n(3) Kareem Essam has reflected any absences or no-shows for the Recon team\n\nIf any attendance log has not been updated by midday: contact the relevant supervisor and request immediate update.\n\nCheck for any unreported no-shows by cross-referencing the shift schedule with active Freshdesk agents. Flag any discrepancy to the relevant supervisor and log it for the weekly adherence report."},
+{id:"ak5",owner:"Amr Kabeel",freq:"daily",priority:"high",report:false,dueDate:null,name:"Escalated, delayed & complaint case pipeline",
+desc:"Run a structured daily review of three case types:\n\n(1) ESCALATED CASES — New escalations reviewed within 2 hours of receipt:\n(a) Requires management decision → delegate upward to Operations Manager\n(b) Can be resolved with a policy call → resolve directly\n(c) Misrouted → return to supervisor with instruction\n\n(2) DELAYED CASES — Any ticket open for 3+ calendar days without resolution is flagged:\n- Assign owner, set 24-hour resolution target, log the case\n- If still unresolved after 48 more hours → escalate to Operations Manager\n\n(3) COMPLAINT CASES — Every Freshdesk ticket with category = 'Complaint' reviewed same day it is tagged:\n(a) Is the complaint valid?\n(b) Has it been acknowledged within SLA?\n(c) Does it require a financial adjustment?\n(d) Is it from a VIP partner? → Always flag to Operations Manager, regardless of severity."},
+{id:"ak6",owner:"Amr Kabeel",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Department SLA summary + validation report → Ops Manager",
+desc:"Submit weekly to Operations Manager (due Sunday):\n(1) First-response SLA % per team (After Sale and PHD) — sourced from Fares and Khaled weekly reports\n(2) Resolution SLA % per team\n(3) Department combined SLA rate\n(4) Total SLA breaches by team and by agent with root cause where identifiable\n(5) Top 3 recurring breach triggers this week\n(6) Kabeel's validation: does the data submitted by supervisors match what Freshdesk reports show?\n\nIf there is a discrepancy between supervisor-submitted data and Freshdesk reports, flag it as a data integrity issue and name the supervisor responsible."},
+{id:"ak7",owner:"Amr Kabeel",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Staff adherence & absenteeism report → Ops Manager",
+desc:"Consolidate adherence and absenteeism data from Fares Amr's weekly report and submit to Operations Manager weekly:\n(1) Headcount per shift per day — planned vs. actual for all three teams\n(2) Absences by agent with reason code\n(3) Late arrivals count per agent per team\n(4) No-shows with impact assessment\n(5) Shift adherence % per team\n(6) Repeat absenteeism flags (2+ absences in a single week)\n(7) Coverage gaps that impacted service\n(8) Kabeel's observation: are attendance issues isolated or systemic?"},
+{id:"ak8",owner:"Amr Kabeel",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Escalation, delayed & complaint case weekly audit → Ops Manager",
+desc:"At week end, review the full escalation and complaint log for the week and submit findings to Operations Manager:\n(1) Total escalated cases: count, resolution rate, average resolution time\n(2) Total delayed cases (3+ days): count vs. prior week, root causes\n(3) Total complaint cases: count, resolution status, VIP count\n(4) Cases that required Operations Manager involvement — were they justified?\n(5) Complaint cases closed without a coaching note — flag the relevant supervisor\n(6) Recurring complaint types with 2+ cases sharing the same root cause → flag as systemic, recommend SOP review"},
+{id:"ak9",owner:"Amr Kabeel",freq:"weekly",priority:"high",report:true,dueDate:null,name:"Collect QA submissions for both teams and report → Ops Manager",
+desc:"By Sunday, collect the weekly QA submission reports from:\n- Fares Amr (After Sale — 5 cases per team member)\n- Mohamed Khaled (PHD — 5 cases per team member)\n\nCompile and validate:\n(1) Confirm all agents have been covered with the minimum 5 cases\n(2) Identify agents with below-threshold average scores\n(3) Note any agents flagged for coaching by both supervisors in the same week\n(4) Calculate team-level quality averages for After Sale and PHD\n\nSubmit a consolidated QA summary to the Operations Manager alongside the SLA report."},
+{id:"ak10",owner:"Amr Kabeel",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Full department performance report → Ops Manager",
+desc:"Submit to Operations Manager by the 3rd of the following month. Sections:\n(1) SLA performance trends month-over-month (After Sale + PHD)\n(2) Ticket volume by team, category, and channel\n(3) Escalation and complaint rate vs. prior month\n(4) Delayed case resolution trend\n(5) Payment settlement incidents\n(6) Adherence and absenteeism trends\n(7) Agent-level performance highlights — top performers and flagged agents\n(8) SOP compliance status from supervisor audits\n(9) Training and coaching actions taken during the month\n(10) Recommendations for next month"},
+{id:"ak11",owner:"Amr Kabeel",freq:"monthly",priority:"high",report:true,dueDate:null,name:"SOP compliance audit → Ops Manager",
+desc:"Monthly: review SOP compliance findings submitted by all three supervisors. Identify:\n(1) SOPs with repeated deviations — recommend refresher training and name the responsible supervisor\n(2) SOPs potentially outdated based on operational realities — flag to Operations Manager for revision\n(3) Supervisors who have not completed their SOP audit for the month — escalate\n\nProduce a one-page SOP compliance summary for the Operations Manager file. Submit by the 3rd."},
+{id:"ak12",owner:"Amr Kabeel",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Complaints raised report → Ops Manager",
+desc:"Monthly comprehensive report on all Freshdesk tickets tagged as 'Complaint' during the month:\n(1) Total complaint count vs. prior month\n(2) Complaint breakdown by team, agent, and partner/account\n(3) Complaint categories: billing dispute, service failure, relocation, communication, payment, other\n(4) VIP partner complaints: list all accounts with complaint tickets this month\n(5) Resolution rate and average resolution time\n(6) Unresolved complaints: list with owner and expected resolution date\n(7) Root cause analysis for top recurring complaint type\n\nSubmit by the 3rd of the following month."},
+{id:"ak13",owner:"Amr Kabeel",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Incidents escalated report → Ops Manager",
+desc:"Monthly report on all escalated incidents during the month:\n(1) Total escalation count vs. prior month\n(2) Escalations by team, supervisor, and case type\n(3) Escalations that required Operations Manager involvement: list with outcome\n(4) Average time from escalation receipt to resolution\n(5) Escalations that exceeded 48-hour resolution target: list with root cause\n(6) Escalations originating from VIP accounts: list and flag\n(7) Repeat escalation sources: agents or partners generating 2+ escalations this month\n\nSubmit by the 3rd of the following month."},
+{id:"ak14",owner:"Amr Kabeel",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Delayed cases report → Ops Manager",
+desc:"Monthly report on all cases that were open for 3 or more calendar days without resolution during the month:\n(1) Total delayed case count vs. prior month\n(2) Delayed cases by team, agent, and case type\n(3) Cases that remained delayed for 7+ days: list with full detail\n(4) Root cause analysis: top 3 reasons cases became delayed\n(5) Cases where delay resulted in a complaint or escalation\n(6) Resolution rate for delayed cases: % resolved within 48 hours of being flagged\n\nSubmit by the 3rd of the following month."},
+{id:"ak15",owner:"Amr Kabeel",freq:"monthly",priority:"high",report:true,dueDate:null,name:"Manual payment settlement report → Ops Manager",
+desc:"Monthly report on all manual payment settlements and card-exception cases handled during the month:\n(1) Total manual payment cases: count by team and by agent\n(2) Case types: manual card, card on file, payment link, exception\n(3) Average resolution time per case type\n(4) Cases that exceeded 2-hour resolution target: list with reason\n(5) Cases escalated to Operations Manager: list with outcome\n(6) Any patterns in recurring payment exceptions (same supplier, same booking type, same agent)\n\nSubmit by the 3rd of the following month."},
+];}
+
+// ═══════════════════════════════════════════════════════════════
+// QA MODULE (NAMESPACED)
+// ═══════════════════════════════════════════════════════════════
+const QA_KEY = 'nowworld_qa_queue_v1';
+let qaQueue  = [];
+let qaToastTimer;
+
+function qaInit(){
+  const QA_OPTS = {
+    month:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    ticketType:['Verification','Special request','Amendment','Cancellation','Additional Service','Payment Settlement','Relocation','Incident','Complaint','Inquiry','Shifting','No Action Required'],
+    priority:['Urgent','High','Medium','Low'],
+    status:['Closed','Resolved'],
+    agent:['Abdallah Ragab','Ahmed Amgad','Ahmed Shawky','Amina Ahmed','Amr Rashad','Eman Mohamed','Eriny Ashraf','Mohamed Abdelalim','Mohamed Abdelmoaty','Mohamed Atwa','Mohamed Hussein','Mohamed Mamdouh','Mohamed Salah','Muhamed Abdellah','Omar Abdelsalam','Shrouk Elsayed','Tammam Sayed','Youssef Hesham'],
+    supervisor:['Amr Kabeel','Mohamed Khaled'],
+    team:['Aftersale','Premium Help Desk'],
+    shift:['Morning','Afternoon','Overnight'],
+    day:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    execution:['3','2','1','0'],accuracy:['1','0'],soft:['2','1','0'],doc:['1','0'],
+    execPrim:['','Process Adherence'],execSub:['','Missing Action','Wrong Action'],
+    execDet:['','Third Party Loop','Follow up Gap','Unauthorized Change','Incorrect Workflow','Action not taken'],
+    accPrim:['','Wrong Information'],accSub:['','System Update','Outdated content','Factual error','Conflicting information'],
+    softPrim:['','Email standards'],
+    softSub:['','Grammar','Spelling','Proper greeting','Customer name','Brand tone','Spacing','Punctuation','E-mail address','Screenshot','Relevance','Attachments','Font','Subject','Text Formatting','Inappropriate Wording'],
+    softFix:['','Communication style needs coaching'],
+    docPrim:['','Ticket properties','Summary'],
+    docSub:['','Type','Subtype','Service date','Ticket source','Outcome','Status','No/irrelevant Summary'],
+    docFix:['','CRM/Tools Coaching'],
+  };
+  const QA_MAX = {execution:3,accuracy:1,soft:2,doc:1};
+
+  function qaFill(id,arr){const s=document.getElementById('qa-'+id);if(!s)return;s.innerHTML='';arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v===''?'—':v;s.appendChild(o);});}
+  Object.keys(QA_OPTS).forEach(k=>qaFill(k,QA_OPTS[k]));
+
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('qa-monDate').value=today;
+  document.getElementById('qa-coachDate').value=today;
+  document.getElementById('qa-month').value=QA_OPTS.month[new Date().getMonth()];
+
+  function qaColorFor(p){return p>=0.9?'var(--green)':p>=0.75?'var(--amber)':'var(--red)';}
+  function qaVal(id){return parseInt(document.getElementById('qa-'+id).value||'0',10);}
+  function qaUpdateScore(){
+    const e=qaVal('execution'),a=qaVal('accuracy'),s=qaVal('soft'),d=qaVal('doc');
+    const tot=e+a+s+d,pct=tot/7;
+    const ts=document.getElementById('qa-totalScore');
+    ts.textContent=Math.round(pct*100);ts.style.color=qaColorFor(pct);
+    document.getElementById('qa-totalPct').textContent=`${tot} / 7 · ${(pct*100).toFixed(1)}%`;
+    [['execution',e,'bExec','vExec','execBar'],['accuracy',a,'bAcc','vAcc','accBar'],
+     ['soft',s,'bSoft','vSoft','softBar'],['doc',d,'bDoc','vDoc','docBar']].forEach(([k,v,bar,txt,inbar])=>{
+      const p=v/QA_MAX[k];
+      document.getElementById('qa-'+bar).style.width=(p*100)+'%';
+      document.getElementById('qa-'+txt).textContent=`${v}/${QA_MAX[k]}`;
+      const ib=document.getElementById('qa-'+inbar);ib.style.width=(p*100)+'%';ib.style.background=qaColorFor(p);
+    });
+  }
+  ['execution','accuracy','soft','doc'].forEach(id=>document.getElementById('qa-'+id).addEventListener('change',qaUpdateScore));
+  qaUpdateScore();
+
+  // Load queue
+  try{const r=localStorage.getItem(QA_KEY);if(r)qaQueue=JSON.parse(r);}catch(e){qaQueue=[];}
+  qaRenderQueue();
+}
+
+function qaSaveQueue(){try{localStorage.setItem(QA_KEY,JSON.stringify(qaQueue));}catch(e){}}
+function qaGv(id){return document.getElementById('qa-'+id)?.value?.trim()||'';}
+function qaFmtDate(v){if(!v)return '';const[y,m,d]=v.split('-');return`${parseInt(m)}/${parseInt(d)}/${y}`;}
+function qaMarkInvalid(id,bad){const el=document.getElementById('qa-'+id);if(el)el.closest('.qa-field')?.classList?.toggle('invalid',bad);}
+function qaValidate(){let ok=true;[['month'],['ticketId'],['agent']].forEach(([id])=>{const bad=!qaGv(id);qaMarkInvalid(id,bad);if(bad)ok=false;});return ok;}
+
+const QA_COLUMNS=['Month','Ticket ID','Agent Name','Priority','Status','Ticket type','Execution','Primary Category E','Sub-Category E','Detailed Sub-Category E','Actionable Fix E','Accuracy','Primary Category A','Sub-Category A','Actionable Fix A','Soft skills','Primary Category S','Sub-Category S','Actionable Fix S','Documentation','Primary Category D','Sub-Category D','Actionable Fix D','Total','Percentage','Monitoring Date','Monitoring Supervisor','Notes','Day Of the Week','Shift','Coaching Date','Team'];
+
+function qaBuildRow(){
+  const e=parseInt(document.getElementById('qa-execution').value||'0'),a=parseInt(document.getElementById('qa-accuracy').value||'0'),s=parseInt(document.getElementById('qa-soft').value||'0'),d=parseInt(document.getElementById('qa-doc').value||'0');
+  const tot=e+a+s+d;
+  return {'Month':qaGv('month'),'Ticket ID':qaGv('ticketId'),'Agent Name':qaGv('agent'),'Priority':qaGv('priority'),'Status':qaGv('status'),'Ticket type':qaGv('ticketType'),'Execution':e,'Primary Category E':qaGv('execPrim'),'Sub-Category E':qaGv('execSub'),'Detailed Sub-Category E':qaGv('execDet'),'Actionable Fix E':'','Accuracy':a,'Primary Category A':qaGv('accPrim'),'Sub-Category A':qaGv('accSub'),'Actionable Fix A':'','Soft skills':s,'Primary Category S':qaGv('softPrim'),'Sub-Category S':qaGv('softSub'),'Actionable Fix S':qaGv('softFix'),'Documentation':d,'Primary Category D':qaGv('docPrim'),'Sub-Category D':qaGv('docSub'),'Actionable Fix D':qaGv('docFix'),'Total':tot,'Percentage':(tot/7),'Monitoring Date':qaFmtDate(qaGv('monDate')),'Monitoring Supervisor':qaGv('supervisor'),'Notes':qaGv('notes'),'Day Of the Week':qaGv('day'),'Shift':qaGv('shift'),'Coaching Date':qaFmtDate(qaGv('coachDate')),'Team':qaGv('team'),_pct:Math.round(tot/7*100)};
+}
+
+function qaAddToQueue(){
+  if(!qaValidate()){qaShowToast('Fill required fields.',true);return;}
+  qaQueue.unshift(qaBuildRow());qaSaveQueue();qaRenderQueue();qaShowToast('Added to queue.');
+  ['ticketId','notes'].forEach(id=>{const el=document.getElementById('qa-'+id);if(el)el.value='';});
+  ['execPrim','execSub','execDet','accPrim','accSub','softPrim','softSub','softFix','docPrim','docSub','docFix'].forEach(id=>{const el=document.getElementById('qa-'+id);if(el)el.selectedIndex=0;});
+  const tid=document.getElementById('qa-ticketId');if(tid)tid.focus();
+}
+function qaRenderQueue(){
+  document.getElementById('qa-queueN').textContent=qaQueue.length;
+  const list=document.getElementById('qa-queueList');
+  if(!qaQueue.length){list.innerHTML='<div class="qa-empty">No tickets queued yet.</div>';return;}
+  list.innerHTML=qaQueue.map((r,i)=>{
+    const c=r._pct>=90?'var(--green)':r._pct>=75?'var(--amber)':'var(--red)';
+    return`<div class="qa-qitem"><span class="qa-qid">#${r['Ticket ID']||'—'}</span><span class="qa-qa">${r['Agent Name']||'—'}</span><span class="qa-qs" style="color:${c}">${r._pct}%</span><span class="qa-qx" onclick="qaRemoveItem(${i})" title="Remove">✕</span></div>`;
+  }).join('');
+}
+function qaRemoveItem(i){qaQueue.splice(i,1);qaSaveQueue();qaRenderQueue();}
+function qaClearQueue(){if(!qaQueue.length)return;if(confirm('Clear all queued tickets?')){qaQueue=[];qaSaveQueue();qaRenderQueue();qaShowToast('Queue cleared.');}}
+function qaRowsToTSV(){return qaQueue.slice().reverse().map(r=>QA_COLUMNS.map(c=>{let v=r[c];if(v===undefined||v===null)v='';if(c==='Percentage'&&v!=='')v=(v*100).toFixed(2)+'%';return String(v).replace(/\t/g,' ').replace(/\r?\n/g,' ');}).join('\t')).join('\n');}
+function qaCopyRows(){if(!qaQueue.length){qaShowToast('Queue is empty.',true);return;}const tsv=qaRowsToTSV();navigator.clipboard.writeText(tsv).then(()=>qaShowToast(`Copied ${qaQueue.length} row(s).`)).catch(()=>{const ta=document.createElement('textarea');ta.value=tsv;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();qaShowToast(`Copied ${qaQueue.length} row(s).`);});}
+function qaDownloadCSV(){if(!qaQueue.length){qaShowToast('Queue is empty.',true);return;}const esc=v=>{v=String(v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};const head=QA_COLUMNS.join(',');const body=qaQueue.slice().reverse().map(r=>QA_COLUMNS.map(c=>{let v=r[c]??'';if(c==='Percentage'&&v!=='')v=(v*100).toFixed(2)+'%';return esc(v);}).join(',')).join('\n');const blob=new Blob([head+'\n'+body],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='QA_submissions_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);qaShowToast('CSV downloaded.');}
+function qaResetForm(){['ticketId','notes'].forEach(id=>{const el=document.getElementById('qa-'+id);if(el)el.value='';});['ticketType','priority','status','agent','supervisor','team','shift','day','execPrim','execSub','execDet','accPrim','accSub','softPrim','softSub','softFix','docPrim','docSub','docFix'].forEach(id=>{const el=document.getElementById('qa-'+id);if(el)el.selectedIndex=0;});const ex=document.getElementById('qa-execution');if(ex)ex.value='3';const ac=document.getElementById('qa-accuracy');if(ac)ac.value='1';const sf=document.getElementById('qa-soft');if(sf)sf.value='2';const dc=document.getElementById('qa-doc');if(dc)dc.value='1';['month','ticketId','agent'].forEach(id=>qaMarkInvalid(id,false));qaShowToast('Fields reset.');}
+function qaShowToast(msg,err){const t=document.getElementById('qa-toast');t.textContent=msg;t.className='qa-toast show'+(err?' err':'');clearTimeout(qaToastTimer);qaToastTimer=setTimeout(()=>t.className='qa-toast',3200);}
+
+
+// ═══════════════════════════════════════════════════════════════
+// PURE-JS PDF GENERATOR (no external libraries)
+// ═══════════════════════════════════════════════════════════════
+const PDF = {
+  // A4 in points (1pt = 1/72 inch)
+  W: 595.28, H: 841.89,
+  ML: 51, MR: 51, MT: 62, MB: 56,
+  get CW() { return this.W - this.ML - this.MR; },
+
+  // Helvetica glyph width table (subset for ASCII 32-122, units of 1/1000 em)
+  _cw: {B:{}, N:{}},
+  _glyphW: function(ch, bold) {
+    // Approximate widths for Helvetica — good enough for layout
+    const c = ch.charCodeAt(0);
+    if (c < 32 || c > 126) return 278;
+    const narrow = [32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,58,59,60,61,62,63,64,91,92,93,94,95,96,123,124,125,126];
+    const wide   = [77,87,109,119];
+    if (narrow.includes(c)) return bold?278:278;
+    if (wide.includes(c))   return bold?778:722;
+    if (c >= 65 && c <= 90) return bold?722:667;
+    return bold ? 556 : 500;
+  },
+  _strW: function(s, size, bold) {
+    let w = 0;
+    for (let i = 0; i < s.length; i++) w += this._glyphW(s[i], bold);
+    return w * size / 1000;
+  },
+
+  // PDF object store
+  _objs: [],
+  _pages: [],
+  _curPage: null,
+  _streams: {},
+
+  init: function() {
+    this._objs = [];
+    this._pages = [];
+    this._curPage = null;
+    this._streams = {};
+    return this;
+  },
+
+  _addObj: function(content) {
+    this._objs.push(content);
+    return this._objs.length; // 1-indexed
+  },
+
+  newPage: function() {
+    // Flush previous page stream
+    if (this._curPage !== null) {
+      this._flushPage();
+    }
+    this._curPage = { ops: [], y: this.H - this.MT };
+    return this;
+  },
+
+  _flushPage: function() {
+    const stream = this._curPage.ops.join('\n');
+    const streamObj = this._addObj(null); // reserve
+    const pageObj   = this._addObj(null);
+    this._streams[streamObj] = stream;
+    this._pages.push({ pageObj, streamObj });
+    this._objs[streamObj - 1] = 'STREAM';
+    this._objs[pageObj   - 1] = 'PAGE:' + streamObj;
+  },
+
+  // ── DRAWING PRIMITIVES ──────────────────────────────────────
+  _op: function(op) { this._curPage.ops.push(op); },
+
+  rect: function(x, y, w, h, fill, stroke) {
+    const py = this.H - y - h;
+    if (fill) {
+      const [r,g,b] = this._hex(fill);
+      this._op(`${r} ${g} ${b} rg`);
+      this._op(`${x.toFixed(2)} ${py.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f`);
+    }
+    if (stroke) {
+      const [r,g,b] = this._hex(stroke);
+      this._op(`${r} ${g} ${b} RG`);
+      this._op(`0.5 w`);
+      this._op(`${x.toFixed(2)} ${py.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S`);
+    }
+  },
+
+  line: function(x1, y1, x2, y2, color, width) {
+    const [r,g,b] = this._hex(color||'#CCCCCC');
+    this._op(`${r} ${g} ${b} RG`);
+    this._op(`${(width||0.5).toFixed(2)} w`);
+    this._op(`${x1.toFixed(2)} ${(this.H-y1).toFixed(2)} m ${x2.toFixed(2)} ${(this.H-y2).toFixed(2)} l S`);
+  },
+
+  text: function(str, x, y, size, color, bold) {
+    if (!str) return;
+    // Sanitize: remove non-Latin-1 chars that PDF can't handle
+    str = str.replace(/[^\x20-\x7E\xA0-\xFF]/g, function(c) {
+      const map = {'–':'-','—':'-','\u2019':"'",'\u201C':'"','\u201D':'"',
+                   '\u2022':'*','\u25CF':'*','\u2713':'Done','\u23F3':'Pending',
+                   '\u26A0':'!','\u2192':'>','\u2026':'...',
+                   '\u00B7':'.','\u00D7':'x'};
+      return map[c] || ' ';
+    });
+    const [r,g,b] = this._hex(color||'#000000');
+    const font = bold ? 'Fb' : 'Fn';
+    const py = this.H - y;
+    // Escape PDF string
+    const esc = str.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+    this._op(`BT`);
+    this._op(`/${font} ${size} Tf`);
+    this._op(`${r} ${g} ${b} rg`);
+    this._op(`${x.toFixed(2)} ${py.toFixed(2)} Td`);
+    this._op(`(${esc}) Tj`);
+    this._op(`ET`);
+  },
+
+  // Wrap text into lines within maxW, return array of line strings
+  wrapText: function(str, maxW, size, bold) {
+    if (!str) return [''];
+    str = str.replace(/\r/g,'');
+    const paragraphs = str.split('\n');
+    const lines = [];
+    for (const para of paragraphs) {
+      if (!para.trim()) { lines.push(''); continue; }
+      const words = para.split(' ');
+      let cur = '';
+      for (const word of words) {
+        const test = cur ? cur + ' ' + word : word;
+        if (this._strW(test, size, bold) <= maxW) {
+          cur = test;
+        } else {
+          if (cur) lines.push(cur);
+          // If single word too wide, truncate
+          cur = word;
+        }
+      }
+      if (cur) lines.push(cur);
+    }
+    return lines.length ? lines : [''];
+  },
+
+  // Draw wrapped text, return new y position
+  textWrapped: function(str, x, y, maxW, size, color, bold, lineH) {
+    const lh = lineH || size * 1.4;
+    const lines = this.wrapText(str, maxW, size, bold);
+    for (const line of lines) {
+      this.text(line, x, y, size, color, bold);
+      y += lh;
+    }
+    return y; // y after last line
+  },
+
+  // Height a wrapped text block will consume
+  textHeight: function(str, maxW, size, bold, lineH) {
+    const lh = lineH || size * 1.4;
+    const lines = this.wrapText(str, maxW, size, bold);
+    return lines.length * lh;
+  },
+
+  _hex: function(h) {
+    h = h.replace('#','');
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    const r = parseInt(h.slice(0,2),16)/255;
+    const g = parseInt(h.slice(2,4),16)/255;
+    const b = parseInt(h.slice(4,6),16)/255;
+    return [r.toFixed(3), g.toFixed(3), b.toFixed(3)];
+  },
+
+  get y() { return this._curPage.y; },
+  set y(v) { this._curPage.y = v; },
+
+  // ── HIGH-LEVEL COMPONENTS ───────────────────────────────────
+  // Section header bar
+  secBar: function(text, bgColor, startY) {
+    const y = startY !== undefined ? startY : this.y;
+    const h = 22;
+    this.rect(this.ML, y, this.CW, h, bgColor||'#4F46E5');
+    this.text(text, this.ML + 10, y + 6, 10, '#FFFFFF', true);
+    this.y = y + h;
+    return this;
+  },
+
+  // Table — auto page-breaks, repeats header
+  table: function(headers, rows, colWidths, opts) {
+    opts = opts || {};
+    const hdrBg   = opts.hdrBg   || '#4F46E5';
+    const rowH     = opts.rowH    || 20;      // min row height
+    const fontSize = opts.fontSize|| 9;
+    const cellPad  = opts.cellPad || 7;
+    const lineH    = fontSize * 1.3;
+    const altBg    = opts.altBg   || '#F9FAFB';
+    const borderCol= opts.borderCol||'#E5E7EB';
+
+    // Compute actual col widths in pts from ratios
+    const totalW = colWidths.reduce((a,b)=>a+b,0);
+    const ptWidths = colWidths.map(w => w/totalW * this.CW);
+
+    const drawRow = (cells, y, bg, isBold, textColor) => {
+      // First pass: compute row height needed
+      let maxLines = 1;
+      cells.forEach((cell, ci) => {
+        const maxW = ptWidths[ci] - cellPad*2;
+        const lines = this.wrapText(String(cell||''), maxW, fontSize, isBold);
+        maxLines = Math.max(maxLines, lines.length);
+      });
+      const rh = Math.max(rowH, maxLines * lineH + cellPad * 2);
+
+      // Background
+      if (bg) this.rect(this.ML, y, this.CW, rh, bg);
+      // Border
+      this.rect(this.ML, y, this.CW, rh, null, borderCol);
+
+      // Cell content + vertical lines
+      let xOff = this.ML;
+      cells.forEach((cell, ci) => {
+        const maxW = ptWidths[ci] - cellPad*2;
+        const lines = this.wrapText(String(cell||''), maxW, fontSize, isBold);
+        let ty = y + cellPad;
+        lines.forEach(line => {
+          this.text(line, xOff + cellPad, ty, fontSize, textColor||'#1A1D23', isBold);
+          ty += lineH;
+        });
+        // Vertical line between columns
+        if (ci < cells.length-1) {
+          xOff += ptWidths[ci];
+          this.line(xOff, y, xOff, y + rh, borderCol, 0.4);
+        }
+      });
+
+      return rh;
+    };
+
+    const drawHeader = (y) => {
+      return drawRow(headers, y, hdrBg, true, '#FFFFFF');
+    };
+
+    // Draw header
+    const pageBottom = this.H - this.MB - 16;
+    let y = this.y;
+    let hdrH = drawHeader(y);
+    y += hdrH;
+    this.y = y;
+
+    // Draw data rows
+    rows.forEach((row, ri) => {
+      // Estimate row height
+      let maxLines = 1;
+      row.forEach((cell, ci) => {
+        const maxW = ptWidths[ci] - cellPad*2;
+        const lines = this.wrapText(String(cell||''), maxW, fontSize, false);
+        maxLines = Math.max(maxLines, lines.length);
+      });
+      const estH = Math.max(rowH, maxLines * lineH + cellPad*2);
+
+      // Page break check
+      if (y + estH > pageBottom) {
+        this._footerPage();
+        this.newPage();
+        this._headerPage();
+        y = this.y;
+        hdrH = drawHeader(y);
+        y += hdrH;
+      }
+
+      const bg = ri%2===0 ? '#FFFFFF' : altBg;
+      // Status cell coloring
+      let cellColors = null;
+      if (opts.statusCol !== undefined) {
+        const status = String(row[opts.statusCol]||'');
+        const sc = {Done:'#ECFDF5',Pending:'#FFFBEB',Late:'#FEF2F2','N/A':'#F1F5F9'};
+        if (sc[status]) {
+          cellColors = Array(row.length).fill(bg);
+          cellColors[opts.statusCol] = sc[status];
+        }
+      }
+      const rh = drawRow(row, y, bg, false, '#1A1D23');
+      // Override status cell bg
+      if (cellColors && cellColors[opts.statusCol]) {
+        const stx = ptWidths.slice(0, opts.statusCol).reduce((a,b)=>a+b, 0);
+        const scol = cellColors[opts.statusCol];
+        this.rect(this.ML + stx + 0.5, y + 0.5,
+                   ptWidths[opts.statusCol] - 1, rh - 1, scol);
+        // Redraw status text
+        const stCell = String(row[opts.statusCol]||'');
+        const stColor = {Done:'#166534',Pending:'#92400E',Late:'#991B1B','N/A':'#6B7280'};
+        this.text(stCell, this.ML + stx + cellPad, y + cellPad, fontSize,
+                  stColor[stCell]||'#1A1D23', true);
+      }
+      y += rh;
+      this.y = y;
+    });
+
+    this.y += 4;
+    return this;
+  },
+
+  // KPI strip
+  kpiStrip: function(cards) {
+    const y = this.y;
+    const w = this.CW / cards.length;
+    const h = 54;
+    cards.forEach((c, i) => {
+      const x = this.ML + i * w;
+      this.rect(x, y, w - 1, h, c.bg||'#4F46E5');
+      this.text(c.label, x+10, y+8,  8,  '#CBD5E1', false);
+      this.text(c.value, x+10, y+20, 18, '#FFFFFF', true);
+      this.text(c.sub,   x+10, y+42, 8,  '#CBD5E1', false);
+    });
+    this.y = y + h;
+    return this;
+  },
+
+  // Completion bar rows
+  pctBars: function(rows) {
+    const y0 = this.y;
+    rows.forEach(r => {
+      const y = this.y;
+      this.text(r.label, this.ML, y+4, 9, '#374151', false);
+      // Bar track
+      const bx = this.ML + this.CW*0.55;
+      const bw = this.CW*0.35;
+      this.rect(bx, y, bw, 10, '#E5E7EB');
+      this.rect(bx, y, bw*r.pct/100, 10, r.color||'#4F46E5');
+      // Pct text
+      this.text(r.pct+'%', this.ML + this.CW*0.92, y+4, 9, r.color||'#4F46E5', true);
+      this.y += 18;
+    });
+    this.y += 4;
+    return this;
+  },
+
+  // Running header (called at top of each page after first)
+  _supervisor: '', _period: '', _pageNum: 0,
+  _headerPage: function() {
+    const y = this.MT - 14;
+    this.line(this.ML, y, this.W - this.MR, y, '#E2E8F0', 0.5);
+    this.text('N.O.W.WORLD · Supervisor Performance Report', this.ML, y-10, 7.5, '#9CA3AF', false);
+    this.text(this._supervisor + '  ·  ' + this._period,
+              this.W - this.MR, y-10, 7.5, '#9CA3AF', false);
+    // (right-align via approximate offset)
+    const rw = this._strW(this._supervisor + '  ·  ' + this._period, 7.5, false);
+    // overwrite with correct x
+    this.text(this._supervisor + '  ·  ' + this._period,
+              this.W - this.MR - rw, y-10, 7.5, '#9CA3AF', false);
+    this.y = this.MT;
+  },
+  _footerPage: function() {
+    this._pageNum++;
+    const y = this.H - this.MB + 10;
+    this.line(this.ML, y, this.W - this.MR, y, '#E2E8F0', 0.5);
+    this.text('Confidential — Internal Use Only', this.ML, y+6, 7.5, '#9CA3AF', false);
+    this.text('Page ' + this._pageNum, this.W/2 - 10, y+6, 7.5, '#9CA3AF', false);
+    this.text('NowWorld Online Support Operations', this.W - this.MR - 170, y+6, 7.5, '#9CA3AF', false);
+  },
+
+  // ── EXPORT ─────────────────────────────────────────────────
+  _buildPDFBytes: function() {
+    // Flush last page
+    if (this._curPage) this._flushPage();
+
+    const enc = s => {
+      // encode to latin-1 safe
+      let out = '';
+      for (let i=0;i<s.length;i++) {
+        const c = s.charCodeAt(i);
+        if (c < 256) out += s[i]; else out += ' ';
+      }
+      return out;
+    };
+
+    // Catalog = 1, Pages = 2, Font Fn = 3, Font Fb = 4, pages start at 5
+    const pageStart = 5;
+    const totalObjs = 4 + this._pages.length * 2; // catalog+pages+2fonts + 2 per page
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [];
+
+    const writeObj = (n, content) => {
+      offsets[n] = pdf.length;
+      pdf += `${n} 0 obj\n${content}\nendobj\n`;
+    };
+
+    // 1: Catalog
+    writeObj(1, `<< /Type /Catalog /Pages 2 0 R >>`);
+    // 2: Pages
+    const pageRefs = this._pages.map((_,i) => `${pageStart + i*2} 0 R`).join(' ');
+    writeObj(2, `<< /Type /Pages /Kids [${pageRefs}] /Count ${this._pages.length} >>`);
+    // 3: Font Fn (Helvetica)
+    writeObj(3, `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`);
+    // 4: Font Fb (Helvetica-Bold)
+    writeObj(4, `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>`);
+
+    // Pages + streams
+    this._pages.forEach((p, i) => {
+      const pageN   = pageStart + i*2;
+      const streamN = pageStart + i*2 + 1;
+
+      // Stream obj
+      const streamContent = enc(this._streams[p.streamObj]);
+      offsets[streamN] = pdf.length;
+      pdf += `${streamN} 0 obj\n<< /Length ${streamContent.length} >>\nstream\n${streamContent}\nendstream\nendobj\n`;
+
+      // Page obj
+      writeObj(pageN,
+        `<< /Type /Page /Parent 2 0 R ` +
+        `/MediaBox [0 0 ${this.W.toFixed(2)} ${this.H.toFixed(2)}] ` +
+        `/Contents ${streamN} 0 R ` +
+        `/Resources << /Font << /Fn 3 0 R /Fb 4 0 R >> >> >>`
+      );
+    });
+
+    // xref
+    const xrefPos = pdf.length;
+    const allN = [1,2,3,4,...this._pages.flatMap((_,i)=>[pageStart+i*2+1, pageStart+i*2])];
+    const maxN = Math.max(...allN);
+    pdf += `xref\n0 ${maxN+1}\n`;
+    pdf += `0000000000 65535 f \n`;
+    for (let n=1; n<=maxN; n++) {
+      if (offsets[n] !== undefined) {
+        pdf += `${String(offsets[n]).padStart(10,'0')} 00000 n \n`;
+      } else {
+        pdf += `0000000000 65535 f \n`;
+      }
+    }
+    pdf += `trailer\n<< /Size ${maxN+1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF\n`;
+    return pdf;
+  },
+
+  download: function(filename) {
+    const bytes = this._buildPDFBytes();
+    const blob = new Blob([bytes], {type:'application/pdf'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'report.pdf';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+};
+
+// ── MAIN DOWNLOAD FUNCTION ──────────────────────────────────────
+function tDownloadPDF() {
+  const ownerF = document.getElementById('mf-owner2')?.value || '';
+  const owners = ownerF ? [ownerF] : Object.keys(T_OWNERS);
+
+  if (owners.length > 1) {
+    // Show a small prompt to pick one supervisor
+    const choice = prompt(
+      'Enter supervisor name to download their report:\n\n' +
+      '1. Amr Kabeel\n2. Mohamed Khaled\n3. Fares Amr\n4. Kareem Essam\n\n' +
+      'Type the number or name:'
+    );
+    if (!choice) return;
+    const map = {'1':'Amr Kabeel','2':'Mohamed Khaled','3':'Fares Amr','4':'Kareem Essam'};
+    const resolved = map[choice.trim()] || choice.trim();
+    if (!T_OWNERS[resolved]) {
+      alert('Supervisor not found. Please use the supervisor filter to select one first, then click Download PDF.');
+      return;
+    }
+    _generatePDF(resolved);
+  } else {
+    _generatePDF(owners[0]);
+  }
+}
+
+function _generatePDF(ownerName) {
+  const o = T_OWNERS[ownerName];
+  if (!o) return;
+
+  const now = new Date();
+  const period = 'Week of ' + PDF._supervisor; // will be set below
+  const generated = now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) +
+                    ', ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  // Gather tasks for this owner
+  const allTasks = tTasks.filter(t => t.owner === ownerName);
+  const daily    = allTasks.filter(t => t.freq === 'daily');
+  const weekly   = allTasks.filter(t => t.freq === 'weekly');
+  const monthly  = allTasks.filter(t => t.freq === 'monthly');
+
+  const toRow = (t) => {
+    const st = tStatus[t.id] || 'pending';
+    const sm = T_STATUS[st];
+    const due = tDueLabel(t);
+    const note = tNotes[t.id] || '';
+    return [t.name, T_FREQ_LBL[t.freq], t.priority.charAt(0).toUpperCase()+t.priority.slice(1),
+            sm.label, due, note];
+  };
+
+  const dDone = daily.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+  const wDone = weekly.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+  const mDone = monthly.filter(t=>(tStatus[t.id]||'pending')==='done').length;
+  const total = allTasks.length;
+  const done  = dDone + wDone + mDone;
+  const late  = allTasks.filter(t=>(tStatus[t.id]||'pending')==='late').length;
+  const pend  = allTasks.filter(t=>(tStatus[t.id]||'pending')==='pending').length;
+  const over  = allTasks.filter(t=>tDeliveryOf(t)==='overdue').length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  const dPct  = daily.length  ? Math.round(dDone/daily.length*100)   : 0;
+  const wPct  = weekly.length ? Math.round(wDone/weekly.length*100)  : 0;
+  const mPct  = monthly.length? Math.round(mDone/monthly.length*100) : 0;
+
+  const weekStr = PDF._supervisor = ownerName;
+  const periodStr = tWeekStr();
+  PDF._period = periodStr;
+
+  PDF.init().newPage();
+  PDF._supervisor = ownerName;
+  PDF._period = periodStr;
+  PDF._pageNum = 1;
+
+  const ACCENT = o.color;
+  const CW = PDF.CW;
+  let y = PDF.MT;
+
+  // ── COVER BLOCK ─────────────────────────────────────────────
+  PDF.rect(PDF.ML, y, CW, 88, ACCENT);
+  PDF.text('N.O.W.WORLD  -  Online Support Department', PDF.ML+14, y+10, 8, '#CBD5E1', false);
+  PDF.text('Supervisor Performance Report', PDF.ML+14, y+24, 20, '#FFFFFF', true);
+  PDF.text(ownerName, PDF.ML+14, y+54, 13, '#FFFFFF', true);
+  PDF.text(o.role, PDF.ML+14, y+68, 9, '#CBD5E1', false);
+  PDF.text('Period: ' + periodStr + '   |   Generated: ' + generated,
+           PDF.ML+14, y+80, 8, '#CBD5E1', false);
+  y += 100;
+
+  // ── KPI STRIP ───────────────────────────────────────────────
+  PDF.y = y;
+  const colors = {G:'#059669',A:'#D97706',P:'#7C3AED'};
+  PDF.kpiStrip([
+    {label:'Completion Rate', value:pct+'%',  sub:done+' of '+total+' tasks', bg:ACCENT},
+    {label:'Daily Tasks',     value:dPct+'%', sub:dDone+' of '+daily.length+' done', bg:colors.G},
+    {label:'Weekly Tasks',    value:wPct+'%', sub:wDone+' of '+weekly.length+' done', bg:colors.A},
+    {label:'Monthly Tasks',   value:mPct+'%', sub:mDone+' of '+monthly.length+' done', bg:colors.P},
+  ]);
+  PDF.y += 10;
+
+  // ── COMPLETION BY FREQ ──────────────────────────────────────
+  PDF.secBar('Completion by Frequency', ACCENT);
+  PDF.y += 6;
+  PDF.pctBars([
+    {label:'Daily Tasks  ('+daily.length+' total)',   pct:dPct, color:colors.G},
+    {label:'Weekly Tasks  ('+weekly.length+' total)',  pct:wPct, color:colors.A},
+    {label:'Monthly Tasks  ('+monthly.length+' total)',pct:mPct, color:colors.P},
+  ]);
+  PDF.y += 8;
+
+  // ── DELIVERY STATUS ─────────────────────────────────────────
+  PDF.secBar('Delivery Status Overview', ACCENT);
+  PDF.y += 6;
+  PDF.table(
+    ['Status','Count','% of Total','Note'],
+    [
+      ['Done',    String(done), String(total?Math.round(done/total*100):0)+'%', 'Completed within due time'],
+      ['Pending', String(pend), String(total?Math.round(pend/total*100):0)+'%', ''],
+      ['Late',    String(late), String(total?Math.round(late/total*100):0)+'%', late?'Requires follow-up':''],
+      ['Overdue', String(over), String(total?Math.round(over/total*100):0)+'%', over?'Past due time':'-'],
+    ],
+    [28,12,15,45],
+    {hdrBg:ACCENT, statusCol:0}
+  );
+  PDF.y += 8;
+
+  // ── DAILY TASKS ─────────────────────────────────────────────
+  PDF.secBar('Daily Tasks', '#1E3A5F');
+  PDF.y += 6;
+  if (daily.length) {
+    PDF.table(
+      ['Task','Priority','Status','Due','Note'],
+      daily.map(t => {
+        const r = toRow(t);
+        return [r[0], r[2], r[3], r[4], r[5]];
+      }),
+      [32,10,10,12,36],
+      {hdrBg:'#1E3A5F', statusCol:2}
+    );
+  }
+  PDF.y += 8;
+
+  // ── WEEKLY TASKS ────────────────────────────────────────────
+  PDF.secBar('Weekly Tasks', '#065F46');
+  PDF.y += 6;
+  if (weekly.length) {
+    PDF.table(
+      ['Task','Priority','Status','Due','Note'],
+      weekly.map(t => {
+        const r = toRow(t);
+        return [r[0], r[2], r[3], r[4], r[5]];
+      }),
+      [32,10,10,12,36],
+      {hdrBg:'#065F46', statusCol:2}
+    );
+  }
+  PDF.y += 8;
+
+  // ── MONTHLY TASKS ───────────────────────────────────────────
+  PDF.secBar('Monthly Tasks', '#78350F');
+  PDF.y += 6;
+  if (monthly.length) {
+    PDF.table(
+      ['Task','Priority','Status','Due','Note'],
+      monthly.map(t => {
+        const r = toRow(t);
+        return [r[0], r[2], r[3], r[4], r[5]];
+      }),
+      [32,10,10,12,36],
+      {hdrBg:'#78350F', statusCol:2}
+    );
+  }
+  PDF.y += 8;
+
+  // ── LATE / OVERDUE ──────────────────────────────────────────
+  const lateTasks = allTasks.filter(t=>(tStatus[t.id]||'pending')==='late'||tDeliveryOf(t)==='overdue');
+  if (lateTasks.length) {
+    PDF.secBar('Late & Overdue Tasks - Action Required', '#DC2626');
+    PDF.y += 6;
+    PDF.table(
+      ['Task','Status','Delivery','Note'],
+      lateTasks.map(t => {
+        const st = T_STATUS[tStatus[t.id]||'pending'].label;
+        const ds = tDeliveryOf(t);
+        return [t.name, st, ds==='overdue'?'Overdue':'Late', tNotes[t.id]||''];
+      }),
+      [36,12,14,38],
+      {hdrBg:'#DC2626', statusCol:1}
+    );
+    PDF.y += 8;
+  }
+
+  // ── REPORT TASKS ─────────────────────────────────────────────
+  const reportTasks = allTasks.filter(t=>t.report);
+  if (reportTasks.length) {
+    PDF.secBar('Report Tasks - Submissions to Manager', ACCENT);
+    PDF.y += 6;
+    PDF.table(
+      ['Report','Frequency','Status','Due / Note'],
+      reportTasks.map(t => {
+        const st = T_STATUS[tStatus[t.id]||'pending'].label;
+        const due = tDueLabel(t);
+        return [t.name, T_FREQ_LBL[t.freq], st, (tNotes[t.id]||due)];
+      }),
+      [38,12,12,38],
+      {hdrBg:ACCENT, statusCol:2}
+    );
+    PDF.y += 8;
+  }
+
+  // ── FOOTER NOTE ──────────────────────────────────────────────
+  PDF.line(PDF.ML, PDF.y, PDF.ML+CW, PDF.y, '#E2E8F0', 0.5);
+  PDF.y += 8;
+  const footNote = 'This report was generated from the NowWorld Operations Hub - Task Tracker. ' +
+    'Data reflects task statuses at the time of generation. ' +
+    'All statuses are set by the supervisor and validated via the Manager Dashboard.';
+  PDF.textWrapped(footNote, PDF.ML, PDF.y, CW, 8, '#9CA3AF', false);
+  PDF.y += 18;
+  PDF.text('N.O.W.WORLD - Nirvana Over The World - Online Support Department - Internal Use Only',
+           PDF.ML, PDF.y, 8, '#9CA3AF', false);
+
+  // Footer on last page
+  PDF._footerPage();
+
+  // Download
+  const fname = 'NowWorld_' + ownerName.replace(/ /g,'_') + '_Report_' +
+    new Date().toISOString().slice(0,10) + '.pdf';
+  PDF.download(fname);
+  tToast('PDF report downloaded for ' + ownerName);
+}
+// ── END PDF MODULE ──────────────────────────────────────────────
+
+function tChangeUser(){
+  const name=prompt('Enter your name:',tGetUser());
+  if(name&&name.trim()){
+    _syncUser=name.trim();
+    sessionStorage.setItem('now_user',_syncUser);
+    const el=document.getElementById('t-sb-user');
+    if(el)el.textContent='👤 '+_syncUser;
+    tToast('User changed to '+_syncUser);
+  }
+}
+
+// ── FINAL INIT CHECK ───────────────────────────────────────────
+</script>
+</body>
+</html>
