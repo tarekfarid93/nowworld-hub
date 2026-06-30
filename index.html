@@ -1177,8 +1177,27 @@ function tInit(){
   tLoadFromSheet().then(()=>{
     tCheckDailyReset();
     tCheckAutoLate();
+    tMigrateLegacyCustomTasks();
     tRefresh();
   });
+}
+
+// ── ONE-TIME SELF-HEAL ───────────────────────────────────────────
+// Tasks added before this fix never got marked `custom`, so they were
+// silently never pushed to the Sheet. This catches any task already
+// sitting in local storage that isn't a seed task and isn't already
+// confirmed synced, marks it custom, and pushes it up once.
+function tMigrateLegacyCustomTasks(){
+  const seedIds = new Set(tSeedTasks().map(t=>t.id));
+  let changed = false;
+  tTasks.forEach(t=>{
+    if(!seedIds.has(t.id) && !t.custom){
+      t.custom = true;
+      changed = true;
+      tSheetWrite({action:'addTask',task:t});
+    }
+  });
+  if(changed) tlsw(TSK.tasks,tTasks);
 }
 
 function scheduleNextMidnight(){
@@ -1552,7 +1571,7 @@ function tRenderManager(){
     const t=tTasks.find(x=>x.id===tid);if(!t)return;
     entries.forEach(h=>allHist.push({...h,tName:t.name,owner:t.owner}));
   });
-  allHist.sort((a,b)=>b.at.localeCompare(a.at));
+  allHist.sort((a,b)=>(b.ts||0)-(a.ts||0));
   const feedHtml=allHist.slice(0,12).map(h=>{
     const o=T_OWNERS[h.owner]||{color:'#888',abbr:'?'};
     const sm=T_STATUS[h.status]||{label:h.status,hex:'#888'};
@@ -1659,6 +1678,9 @@ function tOpenEdit(id){
 function tSaveTask(){
   const name=document.getElementById('t-m-name').value.trim();
   if(!name){tToast('Task name is required.',true);return;}
+  // Editing a built-in (seed) task stays local-only, same as before — only
+  // genuinely new/custom tasks get marked custom and synced to the Sheet.
+  const isSeedEdit = tEditId && tSeedTasks().some(s=>s.id===tEditId);
   const id=tEditId||('c_'+Date.now());
   const freq=document.getElementById('t-m-freq').value;
   const task={id,name,
@@ -1666,7 +1688,8 @@ function tSaveTask(){
     owner:document.getElementById('t-m-owner').value,
     freq,priority:document.getElementById('t-m-priority').value,
     dueDate:freq==='monthly'?(document.getElementById('t-m-due').value||null):null,
-    report:document.getElementById('t-m-report').checked};
+    report:document.getElementById('t-m-report').checked,
+    custom:!isSeedEdit};
   if(tEditId){
     const i=tTasks.findIndex(x=>x.id===tEditId);if(i>-1)tTasks[i]=task;
     tlsw(TSK.tasks,tTasks);
@@ -1723,7 +1746,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelect
 // ── HISTORY ────────────────────────────────────────────────────
 function tAddHist(id,status,by){
   if(!tHistory[id])tHistory[id]=[];
-  tHistory[id].push({status,by,at:tNowStr()});
+  // 'ts' is a numeric epoch timestamp used purely for sorting — 'at' is
+  // the human-readable display string. Sorting on 'at' directly is not
+  // reliable (e.g. "5 Jun" sorts after "12 Jun" as plain text).
+  tHistory[id].push({status,by,at:tNowStr(),ts:Date.now()});
   if(tHistory[id].length>30)tHistory[id]=tHistory[id].slice(-30);
 }
 
